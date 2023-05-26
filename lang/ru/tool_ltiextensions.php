@@ -26,14 +26,14 @@
  */
 
 $string['pluginname'] = 'Moodle LTI Extensions';
-$string['auto_publish_as_lti_tools'] = 'Публикует новые курсы и модули в качестве инструментов LTI';
+$string['auto_publish_as_lti_tools'] = 'Публикация новых курсов и модулей в качестве инструментов LTI';
 $string['manage'] = 'Moodle LTI Extensions';
-$string['start_lti_sync'] = 'Начнинает синхронизацию участников и оценок с Платформами LTI';
-$string['push_courses'] = 'Отправляет информацию о курсах и их модулях в Платформы LTI';
-$string['pull_courses'] = 'Создает новые курсы по данным от Платформ LTI';
+$string['start_lti_sync'] = 'Старт синхронизации участников и оценок с Платформами LTI';
+$string['push_courses'] = 'Отправка информации о курсах и их модулях в Платформы LTI';
+$string['pull_courses'] = 'Создание новых курсов по данным от Платформ LTI';
 $string['sync_user'] = 'Пользователь, запускающий синхронизацию LTI';
 $string['sync_user_descr'] = 'Этот пользователь будет добавлен в курс как преподаватель, чтобы начать синхронизацию через LTI. После отработки джоба sync_members пользователь будет удален из курса';
-$string['auto_link_users'] = 'Регистрирует пользователей Moodle в LTI';
+$string['auto_link_users'] = 'Регистрация пользователей Moodle в LTI';
 $string['provisioningmode'] = 'Режим подготовки. Внимание! Изменение значения не влияет на существующие инструменты LTI, только на новые';
 $string['platform_settings'] = 'Дополнительные настройки для удобной интеграции через LTI';
 $string['platform_settings_descr'] = 'Формат JSON (важно использовать двойные кавычки): { "deploymentid": { "lmsapi": "url" }}';

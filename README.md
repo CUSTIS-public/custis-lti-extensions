@@ -4,7 +4,7 @@ Moodle extensions that make LTI integration a bit easier. This extensions publis
 
 # Architecture
 
-Plugin consists of several jobs. Some of them request LTI Platform's APIs. These APIs should be implemented in Platform in addition to APIs, described in LTI standart. Base url of additional APIs is set in `platform_settings`. Additional Platform APIs are described in [open api specification](swagger.json).
+Plugin consists of several jobs. Some of them request LTI Platform's APIs. These APIs should be implemented in Platform in addition to APIs, described in LTI standart. Base url of additional APIs is set in `platform_settings`. Additional Platform APIs are described in [open api specification](swagger.json). Tool is authorized in Platform according to [LTI security standart](https://www.imsglobal.org/spec/security/v1p0/#securing_web_services).
 
 # Jobs
 
