@@ -1,4 +1,4 @@
-# moodle-lti-extensions
+# custis-lti-extensions
 
 Moodle extensions that make LTI integration a bit easier. This extensions publishes all created courses and elements as LTI tools, registers existing users into LTI, sends information about courses to the Platform, etc.
 
