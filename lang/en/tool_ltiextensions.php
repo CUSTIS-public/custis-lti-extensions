@@ -1,5 +1,5 @@
 <?php
-//    Moodle LTI Extensions
+//    Custis LTI Extensions
 //    Copyright (C) 2023 CUSTIS
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -25,9 +25,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Moodle LTI Extensions';
+$string['pluginname'] = 'Custis LTI Extensions';
 $string['auto_publish_as_lti_tools'] = 'Publish new courses and modules as LTI tools';
-$string['manage'] = 'Moodle LTI Extensions';
+$string['manage'] = 'Custis LTI Extensions';
 $string['start_lti_sync'] = 'Start sync of membership and grades with LTI platforms';
 $string['push_courses'] = 'Send info to LTI platforms about courses and their modules';
 $string['pull_courses'] = 'Create new courses using data from LTI platforms';

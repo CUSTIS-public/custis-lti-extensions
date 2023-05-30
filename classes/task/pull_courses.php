@@ -1,5 +1,5 @@
 <?php
-//    Moodle LTI Extensions
+//    Custis LTI Extensions
 //    Copyright (C) 2023 CUSTIS
 //
 //    This program is free software: you can redistribute it and/or modify

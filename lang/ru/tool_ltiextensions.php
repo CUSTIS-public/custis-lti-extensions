@@ -1,5 +1,5 @@
 <?php
-//    Moodle LTI Extensions
+//    Custis LTI Extensions
 //    Copyright (C) 2023 CUSTIS
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -25,9 +25,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Moodle LTI Extensions';
+$string['pluginname'] = 'Custis LTI Extensions';
 $string['auto_publish_as_lti_tools'] = 'Публикация новых курсов и модулей в качестве инструментов LTI';
-$string['manage'] = 'Moodle LTI Extensions';
+$string['manage'] = 'Custis LTI Extensions';
 $string['start_lti_sync'] = 'Старт синхронизации участников и оценок с Платформами LTI';
 $string['push_courses'] = 'Отправка информации о курсах и их модулях в Платформы LTI';
 $string['pull_courses'] = 'Создание новых курсов по данным от Платформ LTI';
@@ -37,7 +37,7 @@ $string['auto_link_users'] = 'Регистрация пользователей 
 $string['provisioningmode'] = 'Режим подготовки. Внимание! Изменение значения не влияет на существующие инструменты LTI, только на новые';
 $string['platform_settings'] = 'Дополнительные настройки для удобной интеграции через LTI';
 $string['platform_settings_descr'] = 'Формат JSON (важно использовать двойные кавычки): { "deploymentid": { "lmsapi": "url" }}';
-$string['common'] = 'Общие настройки плагина Moodle LTI Extensions';
+$string['common'] = 'Общие настройки плагина Custis LTI Extensions';
 $string['lang'] = 'Язык для публикации Инструмента LTI';
 $string['lang_descr'] = 'Используйте только языки, установленные в Moodle. Внимание! Изменение значения не влияет на существующие Инструменты LTI, только на новые';
 $string['lti_field_user_id'] = 'Поле, в котором хранится ИД пользователя для LTI';
