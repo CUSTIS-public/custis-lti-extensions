@@ -66,6 +66,45 @@ class push_courses extends scheduled_task
         return get_string('push_courses', 'tool_ltiextensions');
     }
 
+    public function ensure_custom_field() {
+        global $CFG, $DB;
+        $customfieldname = "modeus_course_published";
+
+        $customfieldid = 0;
+        $customfieldexists = $DB->record_exists('customfield_field', array('name'=>$customfieldname));
+        if(!$customfieldexists) {
+            $customfield = new stdClass();
+            $customfield->shortname = $customfieldname;
+            $customfield->name = $customfieldname;
+            $customfield->type = $customfieldname;
+            $customfield->timecreated = time();
+
+            $customfieldid = $DB->insert_record('customfield_field', $customfield);
+        }
+        else {
+            $customfieldid = (int)$DB->get_field('customfield_field','id', array('name'=>$customfieldname), MUST_EXIST);
+        }
+
+        return $customfieldid;
+    }
+
+    public function update_publish_status($courses, $customfieldid) {
+        global $CFG, $DB;
+        $customfielddata = array();
+
+        foreach($courses as $course) {
+            $fielddata = new stdClass();
+            $fielddata->fieldid = $customfieldid;
+            $fielddata->instanceid = $course->id;
+            $fielddata->intvalue = 1;
+            $fielddata->timecreated = time();
+
+            $customfielddata[] = $fielddata;
+        }
+
+        $DB->insert_records('customfield_data', $customfielddata);
+    }
+
     protected function push_courses(
         array $moduleTypes,
         array $courses,
@@ -140,13 +179,14 @@ class push_courses extends scheduled_task
         return $modules;
     }
 
-    public function get_courses()
+    public function get_courses($customfieldid)
     {
         global $CFG, $DB;
         require_once($CFG->dirroot . "/course/lib.php");
 
         //retrieve courses
-        $courses = $DB->get_records('course');
+        $sql = "SELECT c.* FROM {course} c LEFT JOIN {customfield_data} cfd ON cfd.instanceid = c.id AND cfd.fieldid = ? WHERE cfd.id IS NULL";
+        $courses = $DB->get_records_sql($sql, [$customfieldid]);
 
         //create return value
         $coursesinfo = array();
@@ -231,12 +271,14 @@ class push_courses extends scheduled_task
         $sesscache = new launch_cache_session();
         $appregistrations = $this->appregistrationrepo->find_all();
 
+        $customfieldid = ensure_custom_field();
+
         mtrace("Retreiving module types");
         $moduleTypes = $this->get_module_types();
         mtrace("Found " . count($moduleTypes) . " module types");
 
         mtrace("Retreiving courses");
-        $courses = $this->get_courses();
+        $courses = $this->get_courses($customfieldid);
         mtrace("Found " . count($courses) . " courses");
 
         // Формат: { 'deploymentid': { 'lmsapi': 'url' }}
@@ -269,6 +311,8 @@ class push_courses extends scheduled_task
                     $sc = new LtiServiceConnector($sesscache, new http_client(new curl_http_version_1_1()));
 
                     $this->push_courses($moduleTypes, $courses, $sc, $registration, $deployment, $deploymentSettings);
+
+                    update_publish_status($courses, $customfieldid);
 
                     mtrace("Successfully pushed courses to $deploymentName");
                 } catch (Throwable $e) {
