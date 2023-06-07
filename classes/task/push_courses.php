@@ -73,11 +73,13 @@ class push_courses extends scheduled_task
         $customfieldid = 0;
         $customfieldexists = $DB->record_exists('customfield_field', array('name'=>$customfieldname));
         if(!$customfieldexists) {
-            $customfield = new stdClass();
+            $time = time();
+            $customfield = new \stdClass();
             $customfield->shortname = $customfieldname;
             $customfield->name = $customfieldname;
             $customfield->type = $customfieldname;
-            $customfield->timecreated = time();
+            $customfield->timecreated = $time;
+            $customfield->timemodified = $time;
 
             $customfieldid = $DB->insert_record('customfield_field', $customfield);
         }
@@ -93,11 +95,15 @@ class push_courses extends scheduled_task
         $customfielddata = array();
 
         foreach($courses as $course) {
-            $fielddata = new stdClass();
+            $time = time();
+            $fielddata = new \stdClass();
             $fielddata->fieldid = $customfieldid;
-            $fielddata->instanceid = $course->id;
+            $fielddata->instanceid = $course['id'];
             $fielddata->intvalue = 1;
-            $fielddata->timecreated = time();
+            $fielddata->value = "1";
+            $fielddata->valueformat = 0;
+            $fielddata->timecreated = $time;
+            $fielddata->timemodified = $time;
 
             $customfielddata[] = $fielddata;
         }
@@ -111,7 +117,8 @@ class push_courses extends scheduled_task
         LtiServiceConnector $sc,
         LtiRegistration $registration,
         deployment $deployment,
-        $deploymentSettings
+        $deploymentSettings,
+        $customfieldid
     ) {
         $prefix = str_utils::ensureSlash($deploymentSettings->lmsapi);
         $linksUrl = new moodle_url($prefix . "save-courses", ['deploymentId' => $deployment->get_deploymentid()]);
@@ -122,6 +129,7 @@ class push_courses extends scheduled_task
 
         // Бежим в цикле по курсам, поскольку при отправке всех курсов пачкой возникают проблемы
         // Это надо оптимизировать в рамках MODEUSSW-19325
+        $processedcourses = array();
         foreach ($courses as $course) {
             try {
                 $data = array();
@@ -131,11 +139,16 @@ class push_courses extends scheduled_task
                 if ($result['status'] != 200) {
                     mtrace("Failed to post course '" . $course['name'] . "' (" . $course['id'] . "). Status code " . $result['status']);
                 }
+                else {
+                    $processedcourses[] = $course;
+                }
             } catch (Throwable $e) {
                 mtrace("Error while working with course '" . $course['name'] . "' (" . $course['id'] . ")");
                 debug_utils::traceError($e);
             }
         }
+
+        $this->update_publish_status($processedcourses, $customfieldid);
     }
 
     public function get_course_modules($course)
@@ -271,7 +284,7 @@ class push_courses extends scheduled_task
         $sesscache = new launch_cache_session();
         $appregistrations = $this->appregistrationrepo->find_all();
 
-        $customfieldid = ensure_custom_field();
+        $customfieldid = $this->ensure_custom_field();
 
         mtrace("Retreiving module types");
         $moduleTypes = $this->get_module_types();
@@ -310,9 +323,7 @@ class push_courses extends scheduled_task
                     );
                     $sc = new LtiServiceConnector($sesscache, new http_client(new curl_http_version_1_1()));
 
-                    $this->push_courses($moduleTypes, $courses, $sc, $registration, $deployment, $deploymentSettings);
-
-                    update_publish_status($courses, $customfieldid);
+                    $this->push_courses($moduleTypes, $courses, $sc, $registration, $deployment, $deploymentSettings, $customfieldid);
 
                     mtrace("Successfully pushed courses to $deploymentName");
                 } catch (Throwable $e) {
