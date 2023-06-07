@@ -24,6 +24,7 @@ Plugin consists of several jobs. Some of them request LTI Platform's APIs. These
 
 # Publish
 
+1. Change version in version.php
 1. Zip this repository (or `admin\tool\ltiextensions` folder). Delete `.git` folder from zip-file
 1. Tag the commit with `yyyyMMddvv`
 1. Create release on github
