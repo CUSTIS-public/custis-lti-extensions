@@ -66,23 +66,109 @@ class push_courses extends scheduled_task
         return get_string('push_courses', 'tool_ltiextensions');
     }
 
-    protected function push_courses(
-        array $moduleTypes,
-        array $courses,
-        LtiServiceConnector $sc,
-        LtiRegistration $registration,
-        deployment $deployment,
-        $deploymentSettings
-    ) {
-        $prefix = str_utils::ensureSlash($deploymentSettings->lmsapi);
-        $linksUrl = new moodle_url($prefix . "save-courses", ['deploymentId' => $deployment->get_deploymentid()]);
-        $servicedata = [
-            'url' => $linksUrl->out(false)
-        ];
-        $courseservice = new custis_lti_courses_service($sc, $registration, $servicedata);
+    public function get_or_create_custom_field_id() {
+        global $CFG, $DB;
+        $customfieldname = "modeus_course_published";
 
-        // Бежим в цикле по курсам, поскольку при отправке всех курсов пачкой возникают проблемы
-        // Это надо оптимизировать в рамках MODEUSSW-19325
+        $customfieldid = 0;
+        $customfieldexists = $DB->record_exists('customfield_field', array('name'=>$customfieldname));
+        if(!$customfieldexists) {
+            $time = time();
+            $customfield = new \stdClass();
+            $customfield->shortname = $customfieldname;
+            $customfield->name = $customfieldname;
+            $customfield->description = "Отметка о факте синхронизации курса Moodle с Modeus. Факт наличия кастомной записи указывает, что курс был опубликован."
+            $customfield->type = $customfieldname;
+            $customfield->timecreated = $time;
+            $customfield->timemodified = $time;
+
+            $customfieldid = $DB->insert_record('customfield_field', $customfield);
+        }
+        else {
+            $customfieldid = (int)$DB->get_field('customfield_field','id', array('name'=>$customfieldname), MUST_EXIST);
+        }
+
+        return $customfieldid;
+    }
+
+    private function get_field_array($data, $keyField = 'id')
+    {
+      $result = array();
+      foreach ($data as $item)
+      { 
+        $field = $item[$keyField];
+        $result[] = $field;
+      }
+      return $result;
+    }
+
+    private function to_id_to_object_dictionary($data)
+    {
+      $result = array();
+      foreach ($data as $item)
+      { 
+        $id = $item->id;
+        $result[$id] = $item;
+      }
+      return $result;
+    }
+
+    public function update_publish_status($unpublishedCourses, $modifiedCourses, $customfieldid) {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . "/course/lib.php");
+
+        if(!empty($unpublishedCourses)) {
+            $dataToInsert = array();
+
+            mtrace("Updating published status...");
+            $unpublishedCourseIds = $this->get_field_array($unpublishedCourses);
+            $unpublishedCourseObjects = $DB->get_records_list('course', 'id', $unpublishedCourseIds);
+            foreach($unpublishedCourseObjects as $course) {
+                $time = time();
+                $hash = $this->get_course_state_hash($course);
+                $fielddata = new \stdClass();
+                $fielddata->fieldid = $customfieldid;
+                $fielddata->instanceid = $course->id;
+                $fielddata->value = $hash;
+                $fielddata->valueformat = 1;
+                $fielddata->timecreated = $time;
+                $fielddata->timemodified = $time;
+
+                $dataToInsert[] = $fielddata;
+            }
+
+            if(!empty($dataToInsert)) {
+                $DB->insert_records('customfield_data', $dataToInsert);
+            }
+        }
+
+        if(!empty($modifiedCourses)) {
+            $existingCourseIds = $this->get_field_array($modifiedCourses);
+            $existingCourseObjects = $DB->get_records_list('course', 'id', $existingCourseIds);
+            $existingCourses = $this->to_id_to_object_dictionary($existingCourseObjects);
+
+            $existingRecords = $DB->get_records_list('customfield_data', 'instanceid', $existingCourseIds);
+
+            foreach($existingRecords as $existingRecord) {
+                $time = time();
+                $existingCourse = $existingCourses[$existingRecord->$instanceid];
+                $hash = $this->get_course_state_hash($existingCourse);
+                $fielddata = new \stdClass();
+                $fielddata->id = $existingRecord->$id;
+                $fielddata->value = $hash;
+                $fielddata->timemodified = $time;
+
+                $DB->update_record('customfield_data', $fielddata);
+            }
+        }
+    }
+
+    private function post_courses(
+        custis_lti_courses_service $courseservice,
+        array $moduleTypes,
+        array $courses
+    ) {
+        $processedcourses = array();
         foreach ($courses as $course) {
             try {
                 $data = array();
@@ -92,11 +178,68 @@ class push_courses extends scheduled_task
                 if ($result['status'] != 200) {
                     mtrace("Failed to post course '" . $course['name'] . "' (" . $course['id'] . "). Status code " . $result['status']);
                 }
+                else {
+                    $processedcourses[] = $course;
+                }
             } catch (Throwable $e) {
                 mtrace("Error while working with course '" . $course['name'] . "' (" . $course['id'] . ")");
                 debug_utils::traceError($e);
             }
         }
+
+        return $processedcourses;
+    }
+
+    protected function push_courses(
+        array $moduleTypes,
+        array $unpublishedCourses,
+        array $modifiedCourses,
+        LtiServiceConnector $sc,
+        LtiRegistration $registration,
+        deployment $deployment,
+        $deploymentSettings,
+        $customfieldid
+    ) {
+        $prefix = str_utils::ensureSlash($deploymentSettings->lmsapi);
+        $linksUrl = new moodle_url($prefix . "save-courses", ['deploymentId' => $deployment->get_deploymentid()]);
+        $servicedata = [
+            'url' => $linksUrl->out(false)
+        ];
+        mtrace("URL to post courses: {$servicedata['url']}");
+        $courseservice = new custis_lti_courses_service($sc, $registration, $servicedata);
+
+        mtrace("Sending unpublished courses...");
+        $processedUnpublishedCourses = $this->post_courses($courseservice, $moduleTypes, $unpublishedCourses);
+
+        mtrace("Sending modified courses...");
+        $processedModifiedCourses = $this->post_courses($courseservice, $moduleTypes, $modifiedCourses);
+
+        $this->update_publish_status($processedUnpublishedCourses, $processedModifiedCourses, $customfieldid);
+    }
+
+    public function get_course_state_hash($course)
+    {
+        global $CFG;
+        require_once($CFG->dirroot . "/course/lib.php");
+
+        $modinfo = get_fast_modinfo($course);
+        $sections = $modinfo->get_section_info_all();
+        $modinfosections = $modinfo->get_sections();
+
+        $toHash = "{$course->id}-{$course->fullname}";
+
+        foreach ($sections as $key => $section) {
+            $toHash .= "|{$section->id}-{$section->sequence}-{$section->timemodified}-[";
+            foreach ($modinfosections[$section->section] as $cmid) {
+                $cm = $modinfo->cms[$cmid];
+                $modcontext = context_module::instance($cm->id);
+
+                $toHash .= external_format_string($cm->name, $modcontext->id) + ",";
+            }
+            $toHash .= "]";
+        }
+
+        return md5($toHash);
     }
 
     public function get_course_modules($course)
@@ -140,13 +283,14 @@ class push_courses extends scheduled_task
         return $modules;
     }
 
-    public function get_courses()
+    public function get_unpublished_courses($customfieldid)
     {
         global $CFG, $DB;
         require_once($CFG->dirroot . "/course/lib.php");
 
-        //retrieve courses
-        $courses = $DB->get_records('course');
+        //retrieve not published courses
+        $sql = "SELECT c.* FROM {course} c LEFT JOIN {customfield_data} cfd ON cfd.instanceid = c.id AND cfd.fieldid = ? WHERE cfd.id IS NULL";
+        $courses = $DB->get_records_sql($sql, [$customfieldid]);
 
         //create return value
         $coursesinfo = array();
@@ -173,6 +317,56 @@ class push_courses extends scheduled_task
             $courseinfo['modules'] = $this->get_course_modules($course);
 
             $coursesinfo[] = $courseinfo;
+        }
+
+        return $coursesinfo;
+    }
+
+    public function get_modified_courses($customfieldid)
+    {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . "/course/lib.php");
+
+        //retrieve published courses
+        $sql = "SELECT c.* FROM {course} c JOIN {customfield_data} cfd ON cfd.instanceid = c.id AND cfd.fieldid = ?";
+        $publishedCourses = $DB->get_records_sql($sql, [$customfieldid]);
+
+        //create return value
+        $coursesinfo = array();
+        if(!empty($publishedCourses)) {
+            $sql = "SELECT c.id, cfd.value FROM {course} c JOIN {customfield_data} cfd ON cfd.instanceid = c.id AND cfd.fieldid = ?";
+            $publishedCoursesStates = $DB->get_records_sql_menu($sql, [$customfieldid]);
+
+            //processing published courses to check their modifications
+            foreach ($publishedCourses as $course) {
+                if ($course->id == SITEID) {
+                    continue;
+                }
+
+                $savedHash = $publishedCoursesStates[$course->id];
+                if($savedHash == $this->get_course_state_hash($course)) {
+                    continue;
+                }
+
+                $context = context_course::instance($course->id, IGNORE_MISSING);
+                $lti = $DB->get_records('enrol_lti_tools', array('contextid' => $context->id), 'uuid', 'uuid', 0, 1);
+
+                if (count($lti) == 0) {
+                    continue;
+                }
+
+                reset($lti);
+                $firstlti = current($lti);
+
+                $courseinfo = array();
+                $courseinfo['id'] = $course->id;
+                $courseinfo['lmsIdNumber'] = $course->idnumber;
+                $courseinfo['name'] = external_format_string($course->fullname, $context->id);
+                $courseinfo['customLtiProperties'] = "id=$firstlti->uuid";
+                $courseinfo['modules'] = $this->get_course_modules($course);
+
+                $coursesinfo[] = $courseinfo;
+            }
         }
 
         return $coursesinfo;
@@ -231,13 +425,18 @@ class push_courses extends scheduled_task
         $sesscache = new launch_cache_session();
         $appregistrations = $this->appregistrationrepo->find_all();
 
+        $customfieldid = $this->get_or_create_custom_field_id();
+
         mtrace("Retreiving module types");
         $moduleTypes = $this->get_module_types();
         mtrace("Found " . count($moduleTypes) . " module types");
 
         mtrace("Retreiving courses");
-        $courses = $this->get_courses();
-        mtrace("Found " . count($courses) . " courses");
+        $unpublishedCourses = $this->get_unpublished_courses($customfieldid);
+        mtrace("Found " . count($unpublishedCourses) . " unpublished courses");
+
+        $modifiedCourses = $this->get_modified_courses($customfieldid);
+        mtrace("Found " . count($modifiedCourses) . " published and modified courses");
 
         // Формат: { 'deploymentid': { 'lmsapi': 'url' }}
         $platformSettings = json_decode(get_config('tool_ltiextensions', 'platform_settings'));
@@ -268,7 +467,7 @@ class push_courses extends scheduled_task
                     );
                     $sc = new LtiServiceConnector($sesscache, new http_client(new curl_http_version_1_1()));
 
-                    $this->push_courses($moduleTypes, $courses, $sc, $registration, $deployment, $deploymentSettings);
+                    $this->push_courses($moduleTypes, $unpublishedCourses, $modifiedCourses, $sc, $registration, $deployment, $deploymentSettings, $customfieldid);
 
                     mtrace("Successfully pushed courses to $deploymentName");
                 } catch (Throwable $e) {
