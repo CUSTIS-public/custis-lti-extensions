@@ -77,7 +77,7 @@ class push_courses extends scheduled_task
             $customfield = new \stdClass();
             $customfield->shortname = $customfieldname;
             $customfield->name = $customfieldname;
-            $customfield->description = "Отметка о факте синхронизации курса Moodle с Modeus. Факт наличия кастомной записи указывает, что курс был опубликован."
+            $customfield->description = "Отметка о факте синхронизации курса Moodle с Modeus. Факт наличия кастомной записи указывает, что курс был опубликован.";
             $customfield->type = $customfieldname;
             $customfield->timecreated = $time;
             $customfield->timemodified = $time;
