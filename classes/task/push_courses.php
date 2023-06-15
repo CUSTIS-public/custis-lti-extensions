@@ -91,18 +91,18 @@ class push_courses extends scheduled_task
         return $customfieldid;
     }
 
-    private function to_dictionary($data, $keyField = 'id')
+    private function get_field_array($data, $keyField = 'id')
     {
       $result = array();
       foreach ($data as $item)
       { 
-        $id = $item[$keyField];
-        $result[$id] = $item;
+        $field = $item[$keyField];
+        $result[] = $field;
       }
       return $result;
     }
 
-    private function to_object_dictionary($data)
+    private function to_id_to_object_dictionary($data)
     {
       $result = array();
       foreach ($data as $item)
@@ -121,7 +121,7 @@ class push_courses extends scheduled_task
             $dataToInsert = array();
 
             mtrace("Updating published status...");
-            $unpublishedCourseIds = array_keys($this->to_dictionary($unpublishedCourses));
+            $unpublishedCourseIds = $this->get_field_array($unpublishedCourses);
             $unpublishedCourseObjects = $DB->get_records_list('course', 'id', $unpublishedCourseIds);
             foreach($unpublishedCourseObjects as $course) {
                 $time = time();
@@ -143,9 +143,9 @@ class push_courses extends scheduled_task
         }
 
         if(!empty($modifiedCourses)) {
-            $existingCourseIds = array_keys($this->to_dictionary($modifiedCourses));
+            $existingCourseIds = $this->get_field_array($modifiedCourses);
             $existingCourseObjects = $DB->get_records_list('course', 'id', $existingCourseIds);
-            $existingCourses = $this->to_object_dictionary($existingCourseObjects);
+            $existingCourses = $this->to_id_to_object_dictionary($existingCourseObjects);
 
             $existingRecords = $DB->get_records_list('customfield_data', 'instanceid', $existingCourseIds);
 
