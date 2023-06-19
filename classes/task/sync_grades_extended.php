@@ -170,10 +170,10 @@ class sync_grades_extended extends scheduled_task {
                         ];
 
                         $ags = $this->get_ags($sc, $registration, $servicedata);
-                        $assessedByExternalId = 'unknown';
+                        $assessedByExternalId = 'null';
                         if(!is_null($usermodified)) {
                             $assessedByUser = $DB->get_record('user', array('id' => $usermodified));
-                            $assessedByExternalId=$assessedByUser->idnumber;
+                            $assessedByExternalId = '"' . $assessedByUser->idnumber . '"';
                         }
 
                         $ltigrade = LtiGrade::new()
@@ -183,7 +183,7 @@ class sync_grades_extended extends scheduled_task {
                             ->setTimestamp(date(\DateTimeInterface::ISO8601, $dategraded))
                             ->setActivityProgress('Completed')
                             ->setGradingProgress('FullyGraded')
-                            ->setComment('{"teacherPersonExternalId" : "' . $assessedByExternalId . '"}');
+                            ->setComment('{"teacherPersonExternalId" : ' . $assessedByExternalId . ' }');
 
                         if (empty($servicedata['lineitem'])) {
                             // The launch did not include a couple lineitem, so find or create the line item for grading.
