@@ -35,7 +35,7 @@ use Packback\Lti1p3\LtiRegistration;
 use Packback\Lti1p3\LtiServiceConnector;
 use Throwable;
 use tool_ltiextensions\debug_utils;
-use tool_ltiextensions\interop\custis_lti_links_service;
+use tool_ltiextensions\service\custis_lti_links_service;
 use tool_ltiextensions\interop\LtiMessageLaunchProxy;
 use tool_ltiextensions\str_utils;
 

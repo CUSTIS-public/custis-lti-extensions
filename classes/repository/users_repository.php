@@ -1,32 +1,11 @@
 <?php
-//    Custis LTI Extensions
-//    Copyright (C) 2023 CUSTIS
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-/**
- * Users repository
- *
- * @package    tool_ltiextensions
- * @copyright  2023 CUSTIS
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace tool_ltiextensions\repository;
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Репозиторий для users
+ */
 class users_repository
 {
     /**
@@ -66,13 +45,6 @@ class users_repository
         return $DB->get_records_sql($sql);
     }
 
-    private static function get_not_bound_users_query(string $issuer): string
-    {
-        $issuer256 = hash('sha256', $issuer);
-
-        return "SELECT userid FROM {auth_lti_linked_login} where issuer256 = '$issuer256'";
-    }
-
     /**
      * Получает список полей пользователей из таблицы user_info_field
      *
@@ -85,5 +57,12 @@ class users_repository
         $sql = "SELECT CONCAT('user_info_field::', id) as id, CONCAT('user_info_field -> ', shortname, ' (', name, ')') as name from mdl_user_info_field;";
 
         return $DB->get_records_sql($sql);
+    }
+
+    private static function get_not_bound_users_query(string $issuer): string
+    {
+        $issuer256 = hash('sha256', $issuer);
+
+        return "SELECT userid FROM {auth_lti_linked_login} where issuer256 = '$issuer256'";
     }
 }

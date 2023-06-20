@@ -38,14 +38,16 @@ use Packback\Lti1p3\LtiServiceConnector;
  * @copyright  2021 Jake Dallimore <jrhdallimore@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class sync_grades_extended extends scheduled_task {
+class sync_grades_extended extends scheduled_task
+{
 
     /**
      * Get a descriptive name for this task.
      *
      * @return string
      */
-    public function get_name() {
+    public function get_name()
+    {
         return get_string('tasksyncgrades', 'enrol_lti');
     }
 
@@ -55,7 +57,8 @@ class sync_grades_extended extends scheduled_task {
      * @param \stdClass $resource the enrol_lti_tools data record for the shared resource.
      * @return array an array containing the
      */
-    protected function sync_grades_for_resource($resource): array {
+    protected function sync_grades_for_resource($resource): array
+    {
         global $DB;
         $usercount = 0;
         $sendcount = 0;
@@ -76,7 +79,7 @@ class sync_grades_extended extends scheduled_task {
                 // Remember, not all launches need to support grade services.
                 $userresourcelinks = $resourcelinkrepo->find_by_resource_and_user($resource->id, $user->get_id());
                 $userlastgrade = $user->get_lastgrade();
-                mtrace("Found ".count($userresourcelinks)." resource link(s) $mtracecontent. Attempting to sync grades for all.");
+                mtrace("Found " . count($userresourcelinks) . " resource link(s) $mtracecontent. Attempting to sync grades for all.");
 
                 foreach ($userresourcelinks as $userresourcelink) {
                     mtrace("Processing resource link '{$userresourcelink->get_resourcelinkid()}'.");
@@ -117,8 +120,11 @@ class sync_grades_extended extends scheduled_task {
                             }
                         }
 
-                        $grades = grade_get_grades($cm->course, 'mod', $cm->modname, $cm->instance,
-                            $user->get_localid());
+                        $grades = grade_get_grades(
+                            $cm->course,
+                            'mod', $cm->modname, $cm->instance,
+                            $user->get_localid()
+                        );
                         if (!empty($grades->items[0]->grades)) {
                             $grade = reset($grades->items[0]->grades);
                             if (!empty($grade->item)) {
@@ -171,7 +177,7 @@ class sync_grades_extended extends scheduled_task {
 
                         $ags = $this->get_ags($sc, $registration, $servicedata);
                         $assessedByExternalId = 'null';
-                        if(!is_null($usermodified)) {
+                        if (!is_null($usermodified)) {
                             $assessedByUser = $DB->get_record('user', array('id' => $usermodified));
                             $assessedByExternalId = '"' . $assessedByUser->idnumber . '"';
                         }
@@ -186,6 +192,7 @@ class sync_grades_extended extends scheduled_task {
                             ->setComment('{"teacherPersonExternalId" : ' . $assessedByExternalId . ' }');
 
                         if (empty($servicedata['lineitem'])) {
+                            print_r("kbannyi 7");
                             // The launch did not include a couple lineitem, so find or create the line item for grading.
                             $lineitem = $ags->findOrCreateLineitem(new LtiLineitem([
                                 'label' => $this->get_line_item_label($resource, $context),
@@ -233,7 +240,8 @@ class sync_grades_extended extends scheduled_task {
      * @param \context $context the context of the resource - either course or module.
      * @return string the label to use in the line item.
      */
-    protected function get_line_item_label(\stdClass $resource, \context $context): string {
+    protected function get_line_item_label(\stdClass $resource, \context $context): string
+    {
         $resourcename = 'default';
         if ($context->contextlevel == CONTEXT_COURSE) {
             global $DB;
@@ -242,7 +250,7 @@ class sync_grades_extended extends scheduled_task {
                                 JOIN {enrol} e
                                   ON (e.id = t.enrolid)
                                 JOIN {course} c
-                                  ON {c.id} = e.courseid
+                                  ON c.id = e.courseid
                                WHERE t.id = :resourceid";
             $coursename = $DB->get_field_sql($coursenamesql, ['resourceid' => $resource->id]);
             $resourcename = format_string($coursename, true, ['context' => $context->id]);
@@ -264,7 +272,8 @@ class sync_grades_extended extends scheduled_task {
      * @param array $sd the service data.
      * @return LtiAssignmentsGradesService
      */
-    protected function get_ags(LtiServiceConnector $sc, LtiRegistration $registration, array $sd): LtiAssignmentsGradesService {
+    protected function get_ags(LtiServiceConnector $sc, LtiRegistration $registration, array $sd): LtiAssignmentsGradesService
+    {
         return new LtiAssignmentsGradesService($sc, $registration, $sd);
     }
 
@@ -273,7 +282,8 @@ class sync_grades_extended extends scheduled_task {
      *
      * @return bool|void
      */
-    public function execute() {
+    public function execute()
+    {
         global $CFG;
 
         require_once($CFG->dirroot . '/lib/completionlib.php');

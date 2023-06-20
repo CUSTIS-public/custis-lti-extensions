@@ -15,7 +15,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace tool_ltiextensions\interop;
+namespace tool_ltiextensions\service;
 
 use Packback\Lti1p3\LtiAbstractService;
 use Packback\Lti1p3\LtiConstants;

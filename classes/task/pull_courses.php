@@ -34,8 +34,8 @@ use Packback\Lti1p3\LtiServiceConnector;
 use Throwable;
 use tool_ltiextensions\courses_consts;
 use tool_ltiextensions\debug_utils;
-use tool_ltiextensions\interop\custis_lti_courses_service;
-use tool_ltiextensions\interop\custis_lti_pull_courses_service;
+use tool_ltiextensions\service\custis_lti_courses_service;
+use tool_ltiextensions\service\custis_lti_pull_courses_service;
 use tool_ltiextensions\repository\courses_repository;
 use tool_ltiextensions\str_utils;
 
@@ -275,7 +275,6 @@ class pull_courses extends scheduled_task
 
         return $linksservice->getCourses();
     }
-
 
     /**
      * Берет информацию о курсах из LMS-платформы и создает их в Мудл
