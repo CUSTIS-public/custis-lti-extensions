@@ -165,16 +165,12 @@ class push_courses extends scheduled_task
 
     private function post_courses(
         custis_lti_courses_service $courseservice,
-        array $moduleTypes,
         array $courses
     ) {
         $processedcourses = array();
         foreach ($courses as $course) {
             try {
-                $data = array();
-                $data['moduleTypes'] = $moduleTypes;
-                $data['courses'] = [$course];
-                $result = $courseservice->postCourses($data);
+                $result = $courseservice->postCourses($course);
                 if ($result['status'] != 200) {
                     mtrace("Failed to post course '" . $course['name'] . "' (" . $course['id'] . "). Status code " . $result['status']);
                 }
@@ -190,6 +186,20 @@ class push_courses extends scheduled_task
         return $processedcourses;
     }
 
+    private function post_module_types(
+        custis_lti_courses_service $courseservice,
+        array $moduleTypes
+    ) {
+        try {
+            $result = $courseservice->postCourses($moduleTypes);
+            if ($result['status'] != 200) {
+                mtrace("Failed to post module types. Status code " . $result['status']);
+            }
+        } catch (Throwable $e) {
+            debug_utils::traceError($e);
+        }
+    }
+
     protected function push_courses(
         array $moduleTypes,
         array $unpublishedCourses,
@@ -201,18 +211,24 @@ class push_courses extends scheduled_task
         $customfieldid
     ) {
         $prefix = str_utils::ensureSlash($deploymentSettings->lmsapi);
-        $linksUrl = new moodle_url($prefix . "save-courses", ['deploymentId' => $deployment->get_deploymentid()]);
+        $coursesUrl = new moodle_url($prefix . "save-courses", ['deploymentId' => $deployment->get_deploymentid()]);
+        $moduleTypesUrl = new moodle_url($prefix . "save-module-types", ['deploymentId' => $deployment->get_deploymentid()]);
         $servicedata = [
-            'url' => $linksUrl->out(false)
+            'courses_url' => $coursesUrl->out(false),
+            'module_types_url' => $moduleTypesUrl->out(false),
         ];
-        mtrace("URL to post courses: {$servicedata['url']}");
+        mtrace("URL to post courses: {$servicedata['courses_url']}");
+        mtrace("URL to post module types: {$servicedata['module_types_url']}");
         $courseservice = new custis_lti_courses_service($sc, $registration, $servicedata);
 
+        mtrace("Sending module types...");
+        $this->post_module_types($courseservice, $moduleTypes);
+
         mtrace("Sending unpublished courses...");
-        $processedUnpublishedCourses = $this->post_courses($courseservice, $moduleTypes, $unpublishedCourses);
+        $processedUnpublishedCourses = $this->post_courses($courseservice, $unpublishedCourses);
 
         mtrace("Sending modified courses...");
-        $processedModifiedCourses = $this->post_courses($courseservice, $moduleTypes, $modifiedCourses);
+        $processedModifiedCourses = $this->post_courses($courseservice, $modifiedCourses);
 
         $this->update_publish_status($processedUnpublishedCourses, $processedModifiedCourses, $customfieldid);
     }

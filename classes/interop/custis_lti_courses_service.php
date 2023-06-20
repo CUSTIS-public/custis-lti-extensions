@@ -34,8 +34,21 @@ class custis_lti_courses_service extends LtiAbstractService
     {
         $request = new ServiceRequest(
             ServiceRequest::METHOD_POST,
-            $this->getServiceData()['url'],
+            $this->getServiceData()['courses_url'],
             'push_courses'
+        );
+        $request->setAccept(static::CONTENTTYPE_LINKSCONTAINER);
+        $request->setBody(json_encode($courses));
+
+        return $this->makeServiceRequest($request);
+    }
+
+    public function postModules(array $courses): array
+    {
+        $request = new ServiceRequest(
+            ServiceRequest::METHOD_POST,
+            $this->getServiceData()['module_types_url'],
+            'push_module_types'
         );
         $request->setAccept(static::CONTENTTYPE_LINKSCONTAINER);
         $request->setBody(json_encode($courses));

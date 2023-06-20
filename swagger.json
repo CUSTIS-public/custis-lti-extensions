@@ -58,6 +58,59 @@
         }
       }
     },
+    "/lmsapi/save-module-types": {
+      "post": {
+        "tags": [
+          "LmsCourses"
+        ],
+        "summary": "Сохранить данные о типах модулей LMS",
+        "description": "Требует Client Scope = https://modeus.org/lms/courses",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleTypesContainer"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleTypesContainer"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleTypesContainer"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleTypesContainer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/lmsapi/get-courses-to-create": {
       "get": {
         "tags": [
@@ -198,25 +251,18 @@
         "description": "Курс для создания в Инструменте LTI"
       },
       "CoursesContainer": {
-        "type": "object",
-        "properties": {
-          "courses": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Course"
-            },
-            "description": "Курсы"
-          },
-          "moduleTypes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModuleType"
-            },
-            "description": "Типы элементов"
-          }
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Course"
         },
-        "additionalProperties": false,
-        "description": "Информация о курсах в Инструменте LTI"
+        "description": "Курсы"
+      },
+      "ModuleTypesContainer": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ModuleType"
+        },
+        "description": "Типы элементов"
       },
       "LinksContainer": {
         "type": "object",
