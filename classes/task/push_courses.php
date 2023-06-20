@@ -170,7 +170,9 @@ class push_courses extends scheduled_task
         $processedcourses = array();
         foreach ($courses as $course) {
             try {
-                $result = $courseservice->postCourses($course);
+                $data = json_encode($course);
+                mtrace("Request body: $data");
+                $result = $courseservice->postCourses([$course]);
                 if ($result['status'] != 200) {
                     mtrace("Failed to post course '" . $course['name'] . "' (" . $course['id'] . "). Status code " . $result['status']);
                 }
@@ -191,6 +193,8 @@ class push_courses extends scheduled_task
         array $moduleTypes
     ) {
         try {
+            $data = json_encode($moduleTypes);
+            mtrace("Request body: $data");
             $result = $courseservice->postCourses($moduleTypes);
             if ($result['status'] != 200) {
                 mtrace("Failed to post module types. Status code " . $result['status']);
@@ -482,6 +486,7 @@ class push_courses extends scheduled_task
                         $appregistration->get_clientid()
                     );
                     $sc = new LtiServiceConnector($sesscache, new http_client(new curl_http_version_1_1()));
+                    //$sc = new LtiServiceConnector($sesscache, new http_client(new \curl()));
 
                     $this->push_courses($moduleTypes, $unpublishedCourses, $modifiedCourses, $sc, $registration, $deployment, $deploymentSettings, $customfieldid);
 
