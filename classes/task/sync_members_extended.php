@@ -186,6 +186,13 @@ class sync_members_extended extends scheduled_task
             mtrace('Skipping task - ' . get_string('enrolisdisabled', 'enrol_lti'));
             return;
         }
+
+        // Запускаем линковку пользователей перед синхронизацией участников, чтобы незалинкованные участники не потерялись (не ждали изменений в РМУПе)
+        $link_users_task = new auto_link_users();
+        $link_users_task->execute();
+        mtrace('Completed: auto_link_users task');
+        mtrace("");
+
         $this->resourcelinkrepo = new resource_link_repository();
         $this->appregistrationrepo = new application_registration_repository();
         $this->deploymentrepo = new deployment_repository();
@@ -236,7 +243,6 @@ class sync_members_extended extends scheduled_task
         foreach ($deployments as $deployment) {
             $deploymentById[$deployment->get_id()] = $deployment;
         }
-        mtrace("dicts initialized");
 
         $usercount = 0;
         $enrolcount = 0;
@@ -250,7 +256,7 @@ class sync_members_extended extends scheduled_task
             $contextcount = $contextcount + 1;
             $context = $lticontextById[$lticontextid];
             $lticontextexternalid = $context->get_contextid();
-            mtrace("\nsyncing members for contextid $lticontextexternalid ($len links) ($contextcount from $linkcontextcount)");
+            mtrace("\nSyncing members for contextid $lticontextexternalid ($len links) ($contextcount from $linkcontextcount)");
 
             $members = null;
 
@@ -264,7 +270,7 @@ class sync_members_extended extends scheduled_task
                 $appregistration = $appregistrationsById[$appregistrationid];
 
                 if ($resource == null || $appregistration == null || $deployment == null) {
-                    mtrace("skipping resource $resourceid for $linkid (not found or didn't match: contextid $lticontextexternalid, appregistration $appregistrationid, deployment $deploymentid");
+                    mtrace("Skipping resource $resourceid for $linkid (not found or didn't match: contextid $lticontextexternalid, appregistration $appregistrationid, deployment $deploymentid");
                     continue;
                 }
 
