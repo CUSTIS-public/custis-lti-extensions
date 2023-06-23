@@ -192,7 +192,6 @@ class sync_grades_extended extends scheduled_task
                             ->setComment('{"teacherPersonExternalId" : ' . $assessedByExternalId . ' }');
 
                         if (empty($servicedata['lineitem'])) {
-                            print_r("kbannyi 7");
                             // The launch did not include a couple lineitem, so find or create the line item for grading.
                             $lineitem = $ags->findOrCreateLineitem(new LtiLineitem([
                                 'label' => $this->get_line_item_label($resource, $context),
