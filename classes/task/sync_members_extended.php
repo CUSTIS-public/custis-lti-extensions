@@ -150,7 +150,8 @@ class sync_members_extended extends scheduled_task
     protected function get_members_from_resource_link(
         application_registration $appregistration,
         resource_link $resourcelink,
-        string $customfieldid
+        string $customfieldid,
+        string $contextid
     ) {
 
         // Get a service worker for the corresponding application registration.
@@ -277,7 +278,7 @@ class sync_members_extended extends scheduled_task
                 // Загружаем участников в рамках РМУПа один раз, обобщаем полученные данные на все resource link
                 if ($members === null) {
                     try {
-                        $members = $this->get_members_from_resource_link($appregistration, $link, $customfieldid);
+                        $members = $this->get_members_from_resource_link($appregistration, $link, $customfieldid, $lticontextexternalid);
                         $membercount = count($members);
                         mtrace("$membercount members received.");
                         $usercount += $membercount;
