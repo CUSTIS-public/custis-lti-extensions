@@ -278,7 +278,7 @@ class sync_members_extended extends scheduled_task
                 // Загружаем участников в рамках РМУПа один раз, обобщаем полученные данные на все resource link
                 if ($members === null) {
                     try {
-                        $members = $this->get_members_from_resource_link($appregistration, $link, $customfieldid, $lticontextexternalid);
+                        $members = $this->get_members_from_resource_link($appregistration, $link, $customfieldid, $lticontextid);
                         $membercount = count($members);
                         mtrace("$membercount members received.");
                         $usercount += $membercount;
