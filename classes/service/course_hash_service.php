@@ -21,7 +21,10 @@ class course_hash_service
         $toHash = "{$course->id}-{$course->fullname}";
 
         foreach ($sections as $key => $section) {
-            $toHash .= "|{$section->id}-{$section->sequence}-{$section->timemodified}-[";
+            if (!array_key_exists($section->section, $modinfosections)) {
+                continue;
+            }
+            $toHash .= "|{$section->id}-{$section->sequence}-{$section->name}-[";
             foreach ($modinfosections[$section->section] as $cmid) {
                 $cm = $modinfo->cms[$cmid];
                 $modcontext = context_module::instance($cm->id);

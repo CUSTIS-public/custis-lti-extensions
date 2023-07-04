@@ -107,6 +107,9 @@ class courses_repository
         mtrace("Getting course modules [$course->fullname] ($course->id)");
 
         foreach ($sections as $key => $section) {
+            if (!array_key_exists($section->section, $modinfosections)) {
+                continue;
+            }
             foreach ($modinfosections[$section->section] as $cmid) {
                 $cm = $modinfo->cms[$cmid];
 

@@ -1,5 +1,6 @@
 <?php
 namespace tool_ltiextensions\repository;
+
 use tool_ltiextensions\service\course_hash_service;
 
 defined('MOODLE_INTERNAL') || die();
@@ -132,10 +133,10 @@ class customfield_repository
 
             foreach ($existingRecords as $existingRecord) {
                 $time = time();
-                $existingCourse = $existingCourses[$existingRecord->$instanceid];
+                $existingCourse = $existingCourses[$existingRecord->instanceid];
                 $hash = $this->course_hash_service->get_course_state_hash($existingCourse);
                 $fielddata = new \stdClass();
-                $fielddata->id = $existingRecord->$id;
+                $fielddata->id = $existingRecord->id;
                 $fielddata->value = $hash;
                 $fielddata->timemodified = $time;
 
