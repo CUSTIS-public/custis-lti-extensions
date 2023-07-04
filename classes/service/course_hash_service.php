@@ -26,7 +26,7 @@ class course_hash_service
                 $cm = $modinfo->cms[$cmid];
                 $modcontext = context_module::instance($cm->id);
 
-                $toHash .= external_format_string($cm->name, $modcontext->id) + ",";
+                $toHash .= external_format_string($cm->name, $modcontext->id) . ",";
             }
             $toHash .= "]";
         }
