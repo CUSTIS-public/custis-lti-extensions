@@ -29,14 +29,18 @@ use enrol_lti\local\ltiadvantage\repository\application_registration_repository;
 use enrol_lti\local\ltiadvantage\repository\deployment_repository;
 use enrol_lti\local\ltiadvantage\repository\resource_link_repository;
 use enrol_lti\local\ltiadvantage\repository\user_repository;
+use moodle_url;
 use Packback\Lti1p3\LtiNamesRolesProvisioningService;
 use Packback\Lti1p3\LtiRegistration;
 use Packback\Lti1p3\LtiServiceConnector;
+use tool_ltiextensions\interop\curl_http_version_1_1;
 use tool_ltiextensions\repository\custom_context_repository;
 use tool_ltiextensions\repository\custom_deployment_repository;
 use tool_ltiextensions\repository\custom_resource_link_repository;
 use tool_ltiextensions\repository\customfield_repository;
+use tool_ltiextensions\service\audit_event_logging_service;
 use stdClass;
+use tool_ltiextensions\str_utils;
 
 /**
  * Модифицированная копия фоновой задачи sync_members из плагина "Publish as LTI Tool".
@@ -174,6 +178,18 @@ class sync_members_extended extends scheduled_task
         return $members;
     }
 
+    protected function confirm_membership_sync($lticontextid, $sc, $registration, $deployment, $deploymentSettings): void
+    {
+        $prefix = str_utils::ensureSlash($deploymentSettings->lmsapi);
+        $linksUrl = new moodle_url($prefix . "confirm-membership-sync/$lticontextid", ['deploymentId' => $deployment->get_deploymentid()]);
+        $servicedata = [
+            'url' => $linksUrl->out(false)
+        ];
+        $audit_event_service = new audit_event_logging_service($sc, $registration, $servicedata);
+
+        $audit_event_service->confirm_membership_sync();
+    }
+
     /**
      * Performs the synchronisation of members.
      */
@@ -203,6 +219,7 @@ class sync_members_extended extends scheduled_task
         $this->custom_deployment_repository = new custom_deployment_repository();
         $this->custom_resource_link_repository = new custom_resource_link_repository();
         $this->customfield_repository = new customfield_repository();
+        $sesscache = new launch_cache_session();
 
         // Создаем customfield для сохранения даты синхронизации каждого курса
         $customfieldid = $this->customfield_repository->get_or_create_custom_field_id("modeus_course_membership_sync_time", "Дата последней синхронизации участников курсов с Modeus.");
@@ -310,6 +327,12 @@ class sync_members_extended extends scheduled_task
 
             if (count($members) != 0) {
                 $this->customfield_repository->save_lticontext_membership_sync_time($customfieldid, $lticontextid);
+
+                $sc = new LtiServiceConnector($sesscache, new http_client(new curl_http_version_1_1()));
+                $platformSettings = json_decode(get_config('tool_ltiextensions', 'platform_settings'));
+                $deplid = $deployment->get_deploymentid();
+                $deploymentSettings = $platformSettings->$deplid;
+                $this->confirm_membership_sync($lticontextid, $sc, $registration, $deployment, $deploymentSettings);
             }
 
             $members = null; // Сбросим участников перед обработкой следующего РМУПа
@@ -495,7 +518,7 @@ class sync_members_extended extends scheduled_task
                     case \auth_plugin_lti::PROVISIONING_MODE_PROMPT_NEW_EXISTING:
                     case \auth_plugin_lti::PROVISIONING_MODE_PROMPT_EXISTING_ONLY:
                     default:
-                        mtrace("Skipping account creation for member '{$member['user_id']}'. This member is not eligible for " . 
+                        mtrace("Skipping account creation for member '{$member['user_id']}'. This member is not eligible for " .
                             "automatic creation due to the current account provisioning mode.");
                         continue 2;
                 }

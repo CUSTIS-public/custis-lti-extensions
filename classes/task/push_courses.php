@@ -31,7 +31,7 @@ use Packback\Lti1p3\LtiServiceConnector;
 use Throwable;
 use tool_ltiextensions\debug_utils;
 use tool_ltiextensions\interop\curl_http_version_1_1;
-use tool_ltiextensions\service\custis_lti_courses_service;
+use tool_ltiextensions\service\custis_lti_post_courses_service;
 use tool_ltiextensions\repository\courses_repository;
 use tool_ltiextensions\repository\customfield_repository;
 use tool_ltiextensions\str_utils;
@@ -70,7 +70,7 @@ class push_courses extends scheduled_task
     }
 
     private function post_courses(
-        custis_lti_courses_service $courseservice,
+        custis_lti_post_courses_service $courseservice,
         array $moduleTypes,
         array $courses
     ) {
@@ -112,7 +112,7 @@ class push_courses extends scheduled_task
             'url' => $linksUrl->out(false)
         ];
         mtrace("URL to post courses: {$servicedata['url']}");
-        $courseservice = new custis_lti_courses_service($sc, $registration, $servicedata);
+        $courseservice = new custis_lti_post_courses_service($sc, $registration, $servicedata);
 
         mtrace("Sending unpublished courses...");
         $processedUnpublishedCourses = $this->post_courses($courseservice, $moduleTypes, $unpublishedCourses);
