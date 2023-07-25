@@ -187,7 +187,11 @@ class sync_members_extended extends scheduled_task
         ];
         $audit_event_service = new audit_event_logging_service($sc, $registration, $servicedata);
 
-        $audit_event_service->confirm_membership_sync();
+        try {
+            $audit_event_service->confirm_membership_sync();
+        } catch (\Exception $e) {
+            mtrace("Couldn't confirm membership sync, skipping. Error message: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -327,12 +331,15 @@ class sync_members_extended extends scheduled_task
 
             if (count($members) != 0) {
                 $this->customfield_repository->save_lticontext_membership_sync_time($customfieldid, $lticontextid);
-
                 $sc = new LtiServiceConnector($sesscache, new http_client(new curl_http_version_1_1()));
                 $platformSettings = json_decode(get_config('tool_ltiextensions', 'platform_settings'));
                 $deplid = $deployment->get_deploymentid();
                 $deploymentSettings = $platformSettings->$deplid;
-                $this->confirm_membership_sync($lticontextid, $sc, $registration, $deployment, $deploymentSettings);
+                $ltiregistration = $this->issuerdb->findRegistrationByIssuer(
+                    $appregistration->get_platformid()->out(false),
+                    $appregistration->get_clientid()
+                );
+                $this->confirm_membership_sync($lticontextexternalid, $sc, $ltiregistration, $deployment, $deploymentSettings);
             }
 
             $members = null; // Сбросим участников перед обработкой следующего РМУПа
