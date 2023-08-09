@@ -186,12 +186,7 @@ class sync_members_extended extends scheduled_task
             'url' => $linksUrl->out(false)
         ];
         $audit_event_service = new audit_event_logging_service($sc, $registration, $servicedata);
-
-        try {
-            $audit_event_service->confirm_membership_sync();
-        } catch (\Exception $e) {
-            mtrace("Couldn't confirm membership sync, skipping. Error message: {$e->getMessage()}");
-        }
+        $audit_event_service->confirm_membership_sync();
     }
 
     /**
