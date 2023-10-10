@@ -3,16 +3,29 @@
 namespace tool_ltiextensions\task\base;
 
 use core\task\scheduled_task;
+use tool_ltiextensions\service\LmsAdapterService;
 
 abstract class base_sync_job extends scheduled_task
 {
+    protected LmsAdapterService $lmsAdapterService;
+
+    // Имя текущей задачи
+    private string $current_task_name;
+
+    // Входная точка
     public function execute()
     {
+        $this->current_task_name = $this->get_name();
         $started = time();
         $started_date = date('Y-m-d H:i:s', $started);
+
         mtrace('');
-        mtrace("--- Initialising synchronization job: \"{$this->get_name()}\"");
         mtrace("--- Current time: {$started_date}");
+        mtrace("--- Initialising synchronization job: \"{$this->current_task_name}\"");
+
+        $this->lmsAdapterService = new LmsAdapterService();
+        $this->lmsAdapterService->initialize();
+
         mtrace("--- Starting job...");
         mtrace('');
 
@@ -24,5 +37,6 @@ abstract class base_sync_job extends scheduled_task
         mtrace('--- Job total time: ' . $duration_date);
     }
 
+    // Выполнение работы по синхронизации
     public abstract function do_work();
 }
