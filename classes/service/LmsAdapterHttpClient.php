@@ -16,19 +16,22 @@ use tool_ltiextensions\str_utils;
 // Сервис, выполняющий запросы к LmsAdapter
 class LmsAdapterHttpClient
 {
+    // LTI deployment id
+    public ?string $deploymentId = null;
+
     // Обертка над http_client для выполнения запросов к LmsAdapter.
-    private LtiServiceConnector $ltiConnector;
+    private ?LtiServiceConnector $ltiConnector = null;
 
     // Данные об LTI подключении между Moodle и LmsAdapter.
     // Является частью официального плагина "Publish as LTI tool" и заимствуется этим плагином для аутентификации/авторизации.
-    private LtiRegistration $ltiRegistration;
+    private ?LtiRegistration $ltiRegistration = null;
 
     // Client scopes для авторизации в Keycloak.
     //TODO: актуализировать перед релизом.
     private array $requestScopes = ["https://modeus.org/lms/courses"];
 
     // Адрес адаптера
-    private string $adapterUrl;
+    private ?string $adapterUrl = null;
 
     // Загружает настройки и подготавливает клиент для выполнения запросов
     public function initialize()
@@ -46,12 +49,13 @@ class LmsAdapterHttpClient
             $deployments = $deploymentrepo->find_all_by_registration($appregistration->get_id());
 
             foreach ($deployments as $deployment) {
-                $deplid = $deployment->get_deploymentid();
-                $this->adapterUrl = str_utils::ensureSlash($platformSettings->$deplid->lmsapi);
-                if ($this->adapterUrl === null) {
-                    mtrace("WARNING: deployment with id $deplid doesn't have the 'lmsapi' property in platform_settings and will be SKIPPED");
+                $deploymentId = $deployment->get_deploymentid();
+                if (!isset($platformSettings->$deploymentId) || !isset($platformSettings->$deploymentId->adapterUrl)) {
+                    mtrace("WARNING: deployment with id $deploymentId doesn't have the 'adapterUrl' property in platform_settings and will be SKIPPED");
                     continue;
                 }
+                $deploymentPlatformSettings = $platformSettings->$deploymentId;
+                $this->adapterUrl = str_utils::ensureSlash($deploymentPlatformSettings->adapterUrl);
 
                 $this->ltiRegistration = $issuerdb->findRegistrationByIssuer(
                     $appregistration->get_platformid()->out(false),
@@ -59,6 +63,7 @@ class LmsAdapterHttpClient
                 );
                 $sesscache = new launch_cache_session();
                 $this->ltiConnector = new LtiServiceConnector($sesscache, new http_client(new \curl()));
+                $this->deploymentId = $deploymentId;
 
                 break;
             }
@@ -73,7 +78,7 @@ class LmsAdapterHttpClient
         }
     }
 
-    // например, queryParams вида ['deploymentId' => $deployment->get_deploymentid()]
+    // queryParams должны быть вида ['deploymentId' => $deployment->get_deploymentid()]
     public function httpGet(string $relativeUrl, array $queryParams): array
     {
         $url = new moodle_url($this->adapterUrl . $relativeUrl, $queryParams);
@@ -86,6 +91,7 @@ class LmsAdapterHttpClient
         return $this->requestAdapter($request);
     }
 
+    // queryParams должны быть вида ['deploymentId' => $deployment->get_deploymentid()]
     public function httpPost(string $relativeUrl, array $queryParams, object $body): array
     {
         $url = new moodle_url($this->adapterUrl . $relativeUrl, $queryParams);
@@ -102,10 +108,9 @@ class LmsAdapterHttpClient
     // Выполняет запрос к адаптеру
     private function requestAdapter(ServiceRequest $request): array
     {
-        mtrace("Request adapter {$request->getMethod()}: {$request->getUrl()}");
+        mtrace("{$request->getMethod()}: {$request->getUrl()}");
 
         $requestResult = $this->ltiConnector->makeServiceRequest($this->ltiRegistration, $this->requestScopes, $request, false);
-        print_r($requestResult);
 
         return $requestResult;
     }
