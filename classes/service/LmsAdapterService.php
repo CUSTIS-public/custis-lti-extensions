@@ -16,10 +16,32 @@ class LmsAdapterService
         $this->lmsId = $this->getLmsId();
     }
 
+    public function getLastClosedSession(string $syncSessionType): array
+    {
+        $response = $this->lmsHttpClient->httpGet("api/v1/lms/{$this->lmsId}/sync-sessions/last-closed", ['type' => $syncSessionType]);
+
+        return $response['body'];
+    }
+
+    public function openSession(string $syncSessionType): array
+    {
+        $body = new \stdClass();
+        $body->syncSessionType = $syncSessionType;
+        $body->externalCreatedAt = date('c');
+        $response = $this->lmsHttpClient->httpPost("api/v1/lms/{$this->lmsId}/sync-sessions", [], $body);
+
+        return $response['body'];
+    }
+
+    public function closeSession(string $id)
+    {
+        $this->lmsHttpClient->httpPost("api/v1/lms/{$this->lmsId}/sync-sessions/$id/close", [], null);
+    }
+
     public function getCoursesToCreate()
     {
         mtrace("Getting courses for creation from adapter...");
-        // todo: $response = $this->lmsHttpClient->httpGet('api/v1/lms/by-deployment/' . $this->lmsHttpClient->deploymentId, []);
+        // $response = $this->lmsHttpClient->httpGet('api/v1/lms/by-deployment/' . $this->lmsHttpClient->deploymentId, []);
     }
 
     private function getLmsId(): string

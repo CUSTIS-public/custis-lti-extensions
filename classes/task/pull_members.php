@@ -12,7 +12,7 @@ class pull_members extends base_sync_job
         return 'pull_members';
     }
 
-    public function do_work()
+    public function do_work(array $currentSession, ?array $lastClosedSession)
     {
     }
 }

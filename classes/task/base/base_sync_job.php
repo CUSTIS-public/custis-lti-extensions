@@ -9,26 +9,40 @@ abstract class base_sync_job extends scheduled_task
 {
     protected LmsAdapterService $lmsAdapterService;
 
-    // Имя текущей задачи
-    private string $current_task_name;
+    private array $syncSessionTypeByTaskName = array(
+        "pull_courses" => "PULL_COURSES",
+        "push_courses" => "PUSH_COURSES",
+        "pull_members" => "PULL_MEMBERS",
+        "push_grades" => "PUSH_GRADES",
+    );
 
     // Входная точка
     public function execute()
     {
-        $this->current_task_name = $this->get_name();
+        $current_task_name = $this->get_name();
+        $syncSessionType = $this->syncSessionTypeByTaskName[$current_task_name];
         $started = time();
         $started_date = date('Y-m-d H:i:s', $started);
 
         mtrace('');
         mtrace("--- Current time: {$started_date}");
-        mtrace("--- Initialising synchronization job: \"{$this->current_task_name}\"");
-
+        mtrace("--- Initialising synchronization job: \"{$current_task_name}\"");
         $this->lmsAdapterService = new LmsAdapterService();
 
-        mtrace("--- Starting job...");
         mtrace('');
+        mtrace("--- Creating sync session of type '{$syncSessionType}'...");
+        $lastClosedSession = $this->lmsAdapterService->getLastClosedSession($syncSessionType);
+        $currentSession = $this->lmsAdapterService->openSession($syncSessionType);
+        mtrace("--- Last closed sessionId: {$lastClosedSession['id']}");
+        mtrace("--- Opened sessionId: {$currentSession['id']}");
 
-        $this->do_work();
+        mtrace('');
+        mtrace("--- Starting job...");
+        $this->do_work($currentSession, $lastClosedSession);
+
+        mtrace('');
+        mtrace("--- Closing sync session...");
+        $this->lmsAdapterService->closeSession($currentSession['id']);
 
         $duration = time() - $started;
         $duration_date = gmdate('H:i:s', $duration);
@@ -37,5 +51,5 @@ abstract class base_sync_job extends scheduled_task
     }
 
     // Выполнение работы по синхронизации
-    abstract public function do_work();
+    abstract public function do_work(array $currentSession, ?array $lastClosedSession);
 }

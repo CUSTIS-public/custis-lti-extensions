@@ -12,7 +12,7 @@ class push_courses extends base_sync_job
         return 'push_courses';
     }
 
-    public function do_work()
+    public function do_work(array $currentSession, ?array $lastClosedSession)
     {
     }
 }

@@ -12,7 +12,7 @@ class push_grades extends base_sync_job
         return 'push_grades';
     }
 
-    public function do_work()
+    public function do_work(array $currentSession, ?array $lastClosedSession)
     {
     }
 }

@@ -92,7 +92,7 @@ class LmsAdapterHttpClient
     }
 
     // queryParams должны быть вида ['deploymentId' => $deployment->get_deploymentid()]
-    public function httpPost(string $relativeUrl, array $queryParams, object $body): array
+    public function httpPost(string $relativeUrl, array $queryParams, ?object $body): array
     {
         $url = new moodle_url($this->adapterUrl . $relativeUrl, $queryParams);
         $request = new ServiceRequest(
@@ -100,7 +100,9 @@ class LmsAdapterHttpClient
             $url,
             ServiceRequest::TYPE_UNSUPPORTED
         );
-        $request->setBody(json_encode($body));
+        if ($body !== null) {
+            $request->setBody(json_encode($body));
+        }
 
         return $this->requestAdapter($request);
     }
