@@ -24,7 +24,6 @@ abstract class base_sync_job extends scheduled_task
         mtrace("--- Initialising synchronization job: \"{$this->current_task_name}\"");
 
         $this->lmsAdapterService = new LmsAdapterService();
-        $this->lmsAdapterService->initialize();
 
         mtrace("--- Starting job...");
         mtrace('');
@@ -38,5 +37,5 @@ abstract class base_sync_job extends scheduled_task
     }
 
     // Выполнение работы по синхронизации
-    public abstract function do_work();
+    abstract public function do_work();
 }
