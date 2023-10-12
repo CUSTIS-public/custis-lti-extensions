@@ -38,10 +38,10 @@ class LmsAdapterService
         $this->lmsHttpClient->httpPost("api/v1/lms/{$this->lmsId}/sync-sessions/$id/close", [], null);
     }
 
-    public function getCoursesToCreate()
+    public function getCoursesToCreate(string $sessionId): array
     {
         mtrace("Getting courses for creation from adapter...");
-        // $response = $this->lmsHttpClient->httpGet('api/v1/lms/by-deployment/' . $this->lmsHttpClient->deploymentId, []);
+        return $this->lmsHttpClient->httpGet("api/v1/lms/{$this->lmsId}/sync-sessions/{$sessionId}/sync/courses", [])['body'];
     }
 
     private function getLmsId(): string
