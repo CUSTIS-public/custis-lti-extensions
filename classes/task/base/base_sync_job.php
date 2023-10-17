@@ -32,13 +32,18 @@ abstract class base_sync_job extends scheduled_task
         mtrace('');
         mtrace("--- Creating sync session of type '{$syncSessionType}'...");
         $lastClosedSession = $this->lmsAdapterService->getLastClosedSession($syncSessionType);
-        $currentSession = $this->lmsAdapterService->openSession($syncSessionType);
-        mtrace("--- Last closed sessionId: {$lastClosedSession['id']}");
+        $currentSession = $this->lmsAdapterService->openSession($syncSessionType); // TODO: Создавать сессию синхронизации, только если есть, что синхронизировать (реализовать предпроверку)
+        if ($lastClosedSession === null) {
+            mtrace("--- Last closed session was not found");
+        } else {
+            mtrace("--- Last closed sessionId: {$lastClosedSession['id']}");
+        }
         mtrace("--- Opened sessionId: {$currentSession['id']}");
 
         mtrace('');
         mtrace("--- Starting job...");
         $this->do_work($currentSession, $lastClosedSession);
+        mtrace("--- Job is done!");
 
         mtrace('');
         mtrace("--- Closing sync session...");
@@ -52,4 +57,15 @@ abstract class base_sync_job extends scheduled_task
 
     // Выполнение работы по синхронизации
     abstract public function do_work(array $currentSession, ?array $lastClosedSession);
+
+    protected function epochFromSession(?array $session): ?int
+    {
+        if ($session === null) {
+            return null;
+        }
+        $dateString = $session['externalCreatedAt'];
+        $epochTime = (new \DateTime($dateString, new \DateTimeZone('UTC')))->format('U');
+
+        return $epochTime;
+    }
 }
