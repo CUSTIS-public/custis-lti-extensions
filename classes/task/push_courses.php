@@ -24,9 +24,8 @@ class push_courses extends base_sync_job
         $request = new \stdClass;
         $request->courses = $courses;
         $request->moduleTypes = $moduleTypeInfos;
-        //TODO: добавить поддержку удаления курсов/модулей на стороне LmsAdapter
-        // $deletedCourseIds = $this->getDeletedCourseIds($minimumCreatedAt, $lastSyncTime);
-        //$request->deletedCourseIds = $deletedCourseIds;
+        $deletedCourseIds = $this->getDeletedCourseIds($minimumCreatedAt, $lastSyncTime);
+        $request->deletedCourseIds = $deletedCourseIds;
 
         $this->lmsAdapterService->updateCoursesAndModuleTypes($currentSession['id'], $request);
     }
@@ -163,9 +162,9 @@ class push_courses extends base_sync_job
         mtrace("Found {$coursesCount} deleted courses (starting from 2 years ago and after last sync time: {$lastSyncTimeStr})");
 
         mtrace("Querying deleted course ids...");
-        $selectSql = "SELECT DISTINCT l.courseid {$fromSql}";
+        $selectSql = "SELECT DISTINCT l.courseid as id {$fromSql}";
         $courses = $DB->get_records_sql($selectSql, $queryParams);
 
-        return $courses;
+        return array_map(fn($c) => $c->id, array_values($courses));
     }
 }

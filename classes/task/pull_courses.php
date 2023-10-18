@@ -116,7 +116,6 @@ class pull_courses extends base_sync_job
             $section = course_create_section($courseid);
             $name = $sectionProto['name'];
             course_update_section($courseid, $section, array('summary' => '', 'name' => $name));
-            mtrace("Created section [$name] ($section->id)");
 
             $this->create_modules($sectionProto['modules'], $courseid, $section->section);
         }
@@ -189,7 +188,6 @@ class pull_courses extends base_sync_job
                 $module['introeditor'] = array('text' => $introtext, 'format' => FORMAT_PLAIN, 'itemid' => IGNORE_FILE_MERGE);
 
                 $module = create_module((object) $module);
-                mtrace("Created module [$module->name] ($module->modulename, $module->module)");
             } catch (Throwable $e) {
                 $type = $moduleProto['moduleTypeId'];
                 $name = $moduleProto['name'];
