@@ -101,7 +101,8 @@ class LmsAdapterHttpClient
             ServiceRequest::TYPE_UNSUPPORTED
         );
         if ($body !== null) {
-            $request->setBody(json_encode($body));
+            $body = json_encode($body);
+            $request->setBody($body);
         }
 
         return $this->requestAdapter($request);

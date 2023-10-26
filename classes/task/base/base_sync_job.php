@@ -9,7 +9,7 @@ abstract class base_sync_job extends scheduled_task
 {
     protected LmsAdapterService $lmsAdapterService;
 
-    private array $syncSessionTypeByTaskName = array(
+    protected array $syncSessionTypeByTaskName = array(
         "pull_courses" => "PULL_COURSES",
         "push_courses" => "PUSH_COURSES",
         "pull_members" => "PULL_MEMBERS",
@@ -67,5 +67,12 @@ abstract class base_sync_job extends scheduled_task
         $epochTime = (new \DateTime($dateString, new \DateTimeZone('UTC')))->format('U');
 
         return $epochTime;
+    }
+
+    protected function epochToDateString($epoch): string
+    {
+        $dt = new \DateTime("@$epoch");
+        $dt->setTimezone(new \DateTimeZone('UTC'));
+        return $dt->format('c');
     }
 }

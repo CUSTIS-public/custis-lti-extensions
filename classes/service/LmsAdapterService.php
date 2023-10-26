@@ -75,4 +75,10 @@ class LmsAdapterService
         mtrace("Getting course members for enrolment from adapter...");
         return $this->lmsHttpClient->httpGet("api/v1/lms/{$this->lmsId}/sync-sessions/{$sessionId}/sync/members", [])['body'];
     }
+
+    public function pushGrades(string $sessionId, object $requestBody)
+    {
+        mtrace("Sending grades to adapter...");
+        return $this->lmsHttpClient->httpPost("api/v1/lms/{$this->lmsId}/sync-sessions/{$sessionId}/sync/grades", [], $requestBody);
+    }
 }

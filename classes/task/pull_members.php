@@ -2,6 +2,7 @@
 
 namespace tool_ltiextensions\task;
 
+use tool_ltiextensions\repository\users_repository;
 use tool_ltiextensions\task\base\base_sync_job;
 
 class pull_members extends base_sync_job
@@ -20,7 +21,8 @@ class pull_members extends base_sync_job
         $enrolplugin = enrol_get_plugin('manual');
         $studentRoleId = $DB->get_record('role', ['shortname' => 'student'])->id;
         $teacherRoleId = $DB->get_record('role', ['shortname' => 'editingteacher'])->id;
-        $userGetter = $this->getUserGetter();
+        $users_repository = new users_repository();
+        $userGetter = $users_repository->getUserIdGetter();
 
         mtrace("Begin to enrol...");
         foreach ($courseMembersList as $courseMembers) {
@@ -47,48 +49,6 @@ class pull_members extends base_sync_job
             }
 
             mtrace("");
-        }
-    }
-
-    private function getUserGetter()
-    {
-        // Идентификатор, по которому мы ищем пользователей, может находиться либо в таблице user, либо в user_info_data.
-        // Где именно находится идентификатор - определяется настройками плагина.
-        $userIdConfiguration = get_config('tool_ltiextensions', 'lti_field_user_id');
-        if (!$userIdConfiguration) {
-            throw new \Exception("Не задана настройка lti_field_user_id");
-        }
-
-        // $idField содержит либо название колонки таблицы user, либо идентификатор user_info_field для фильтрации записей в user_info_data.
-        [$tableName, $idField] = explode('::', $userIdConfiguration, 2);
-
-        if ($tableName == "user") {
-            mtrace("Syncing users by [user]->[$idField]");
-            return function ($externalId) use ($idField) {
-                global $CFG, $DB;
-                $user = $DB->get_record('user', [$idField => $externalId]);
-
-                if (!$user) {
-                    return false;
-                } else {
-                    return $user->id;
-                }
-            };
-        } else {
-            mtrace("Syncing users by [user_info_field]->[$idField]");
-            return function ($externalId) use ($idField) {
-                global $CFG, $DB;
-                $sql = "SELECT u.id FROM {user} u
-                JOIN {user_info_data} d ON u.id = d.userid
-                WHERE d.fieldid = :idField AND d.data = :externalId";
-                $user = $DB->get_record_sql($sql, ['idField' => $idField, 'externalId' => $externalId]);
-
-                if (!$user) {
-                    return false;
-                } else {
-                    return $user->id;
-                }
-            };
         }
     }
 }

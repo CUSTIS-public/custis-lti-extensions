@@ -7,9 +7,11 @@ use tool_ltiextensions\task\base\base_sync_job;
 
 class push_courses extends base_sync_job
 {
+    public const name = 'push_courses';
+
     public function get_name()
     {
-        return 'push_courses';
+        return push_courses::name;
     }
 
     public function do_work(array $currentSession, ?array $lastClosedSession)
