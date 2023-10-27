@@ -1,9 +1,9 @@
 <?php
 
-namespace tool_ltiextensions\task\base;
+namespace tool_modeussync\task\base;
 
 use core\task\scheduled_task;
-use tool_ltiextensions\service\LmsAdapterService;
+use tool_modeussync\service\LmsAdapterService;
 
 abstract class base_sync_job extends scheduled_task
 {

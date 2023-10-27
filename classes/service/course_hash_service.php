@@ -1,5 +1,5 @@
 <?php
-namespace tool_ltiextensions\service;
+namespace tool_modeussync\service;
 use context_module;
 
 defined('MOODLE_INTERNAL') || die();

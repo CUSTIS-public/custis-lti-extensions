@@ -1,6 +1,6 @@
 <?php
 
-namespace tool_ltiextensions\service;
+namespace tool_modeussync\service;
 
 use Packback\Lti1p3\LtiAbstractService;
 use Packback\Lti1p3\ServiceRequest;

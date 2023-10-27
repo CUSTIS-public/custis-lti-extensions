@@ -1,6 +1,6 @@
 <?php
 
-$string['pluginname'] = 'Custis LTI Extensions';
+$string['pluginname'] = 'Modeus Sync Plugin';
 $string['auto_publish_as_lti_tools'] = 'Publish new courses and modules as LTI tools';
 $string['manage'] = 'Custis LTI Extensions';
 $string['start_lti_sync'] = 'Start sync of membership and grades with LTI platforms';

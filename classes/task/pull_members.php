@@ -1,9 +1,9 @@
 <?php
 
-namespace tool_ltiextensions\task;
+namespace tool_modeussync\task;
 
-use tool_ltiextensions\repository\users_repository;
-use tool_ltiextensions\task\base\base_sync_job;
+use tool_modeussync\repository\users_repository;
+use tool_modeussync\task\base\base_sync_job;
 
 class pull_members extends base_sync_job
 {

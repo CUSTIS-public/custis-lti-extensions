@@ -1,6 +1,6 @@
 <?php
 
-namespace tool_ltiextensions\service;
+namespace tool_modeussync\service;
 
 use enrol_lti\local\ltiadvantage\lib\http_client;
 use enrol_lti\local\ltiadvantage\lib\issuer_database;
@@ -11,7 +11,7 @@ use moodle_url;
 use Packback\Lti1p3\LtiRegistration;
 use Packback\Lti1p3\LtiServiceConnector;
 use Packback\Lti1p3\ServiceRequest;
-use tool_ltiextensions\str_utils;
+use tool_modeussync\str_utils;
 
 // Сервис, выполняющий запросы к LmsAdapter
 class LmsAdapterHttpClient
@@ -43,7 +43,7 @@ class LmsAdapterHttpClient
         $deploymentrepo = new deployment_repository();
         $issuerdb = new issuer_database($appregistrationrepo, $deploymentrepo);
         $appregistrations = $appregistrationrepo->find_all();
-        $platformSettings = json_decode(get_config('tool_ltiextensions', 'platform_settings'));
+        $platformSettings = json_decode(get_config('tool_modeussync', 'connection_settings'));
 
         foreach ($appregistrations as $appregistration) {
             $deployments = $deploymentrepo->find_all_by_registration($appregistration->get_id());

@@ -1,6 +1,6 @@
 <?php
 
-namespace tool_ltiextensions\interop;
+namespace tool_modeussync\interop;
 
 
 /** CURL, который посылает все запросы в версии HTTP 1.1. См. MODEUSSW-19250 */

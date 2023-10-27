@@ -1,9 +1,9 @@
 <?php
 
-namespace tool_ltiextensions\task;
+namespace tool_modeussync\task;
 
-use tool_ltiextensions\courses_consts;
-use tool_ltiextensions\task\base\base_sync_job;
+use tool_modeussync\courses_consts;
+use tool_modeussync\task\base\base_sync_job;
 
 class push_courses extends base_sync_job
 {

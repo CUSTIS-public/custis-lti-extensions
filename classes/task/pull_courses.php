@@ -1,13 +1,13 @@
 <?php
 
-namespace tool_ltiextensions\task;
+namespace tool_modeussync\task;
 
 use completion_info;
 use Throwable;
-use tool_ltiextensions\courses_consts;
-use tool_ltiextensions\debug_utils;
-use tool_ltiextensions\repository\courses_repository;
-use tool_ltiextensions\task\base\base_sync_job;
+use tool_modeussync\courses_consts;
+use tool_modeussync\debug_utils;
+use tool_modeussync\repository\courses_repository;
+use tool_modeussync\task\base\base_sync_job;
 
 class pull_courses extends base_sync_job
 {
@@ -18,7 +18,7 @@ class pull_courses extends base_sync_job
 
     public function do_work(array $currentSession, ?array $lastClosedSession)
     {
-        $categoryId = get_config('tool_ltiextensions', 'default_category');
+        $categoryId = get_config('tool_modeussync', 'default_category');
         if (!$categoryId) {
             throw new \Exception("Error: Setting 'default_category' not set");
         }

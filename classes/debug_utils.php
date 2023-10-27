@@ -1,6 +1,6 @@
 <?php
 
-namespace tool_ltiextensions;
+namespace tool_modeussync;
 
 use Throwable;
 

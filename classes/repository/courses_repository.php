@@ -1,7 +1,7 @@
 <?php
-namespace tool_ltiextensions\repository;
+namespace tool_modeussync\repository;
 
-use tool_ltiextensions\service\course_hash_service;
+use tool_modeussync\service\course_hash_service;
 
 defined('MOODLE_INTERNAL') || die();
 

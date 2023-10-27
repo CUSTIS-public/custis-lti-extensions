@@ -1,5 +1,5 @@
 <?php
-namespace tool_ltiextensions\repository;
+namespace tool_modeussync\repository;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -13,9 +13,9 @@ class users_repository
         // Идентификатор персоны, по которому мы ищем пользователей, может находиться либо в таблице user, либо в user_info_data.
         // Получаем внешний идентификатор персоны по userid.
         // Где именно находится идентификатор - определяется настройками плагина.
-        $userIdConfiguration = get_config('tool_ltiextensions', 'lti_field_user_id');
+        $userIdConfiguration = get_config('tool_modeussync', 'user_sync_field');
         if (!$userIdConfiguration) {
-            throw new \Exception("Не задана настройка lti_field_user_id");
+            throw new \Exception("Не задана настройка user_sync_field");
         }
 
         // $idField содержит либо название колонки таблицы user, либо идентификатор user_info_field для фильтрации записей в user_info_data.
@@ -56,9 +56,9 @@ class users_repository
         // Идентификатор персоны, по которому мы ищем пользователей, может находиться либо в таблице user, либо в user_info_data.
         // Получаем внутренний идентификатор userid по внешнему идентификатору персоны.
         // Где именно находится идентификатор - определяется настройками плагина.
-        $userIdConfiguration = get_config('tool_ltiextensions', 'lti_field_user_id');
+        $userIdConfiguration = get_config('tool_modeussync', 'user_sync_field');
         if (!$userIdConfiguration) {
-            throw new \Exception("Не задана настройка lti_field_user_id");
+            throw new \Exception("Не задана настройка user_sync_field");
         }
 
         // $idField содержит либо название колонки таблицы user, либо идентификатор user_info_field для фильтрации записей в user_info_data.

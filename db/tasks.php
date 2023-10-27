@@ -2,36 +2,36 @@
 
 $tasks = array(
     array(
-        'classname' => 'tool_ltiextensions\task\push_courses',
+        'classname' => 'tool_modeussync\task\push_courses',
         'blocking' => 0,
-        'minute' => '*/30',
+        'minute' => '*/5',
         'hour' => '*',
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
     ),
     array(
-        'classname' => 'tool_ltiextensions\task\pull_courses',
+        'classname' => 'tool_modeussync\task\pull_courses',
         'blocking' => 0,
-        'minute' => '*/30',
+        'minute' => '*/5',
         'hour' => '*',
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
     ),
     array(
-        'classname' => 'tool_ltiextensions\task\pull_members',
+        'classname' => 'tool_modeussync\task\pull_members',
         'blocking' => 0,
-        'minute' => '*/30',
+        'minute' => '*/5',
         'hour' => '*',
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
     ),
     array(
-        'classname' => 'tool_ltiextensions\task\push_grades',
+        'classname' => 'tool_modeussync\task\push_grades',
         'blocking' => 0,
-        'minute' => '*/30',
+        'minute' => '*/5',
         'hour' => '*',
         'day' => '*',
         'dayofweek' => '*',
