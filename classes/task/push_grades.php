@@ -12,19 +12,20 @@ class push_grades extends base_sync_job
         return 'push_grades';
     }
 
-    public function do_work(array $currentSession, ?array $lastClosedSession)
+    public function work_precheck($lastClosedSession): bool
     {
-        global $CFG, $DB;
-
+        global $DB;
         $pushCoursesJobName = push_courses::name;
+        $error_message = "All courses and modules must be synchronized before grade sync. Run job {$pushCoursesJobName} and try again. Skipping grade sync this time";
         $push_coursesSessionType = $this->syncSessionTypeByTaskName[$pushCoursesJobName];
         $lastClosedPushCoursesSession = $this->lmsAdapterService->getLastClosedSession($push_coursesSessionType);
         if ($lastClosedPushCoursesSession === null) {
-            throw $this->getSyncCoursesException();
+            mtrace($error_message);
+            return false;
         }
         $lastPushCoursesEpoch = $this->epochFromSession($lastClosedPushCoursesSession);
 
-        $selectSql = "SELECT gi.id, gi.courseid, gi.timecreated
+        $selectSql = "SELECT gi.id, gi.courseid, gi.timecreated, gi.itemname
         FROM {grade_items} gi
         WHERE gi.timecreated > :last_push_courses_date
           AND gi.itemtype = 'mod';
@@ -32,12 +33,20 @@ class push_grades extends base_sync_job
         $queryParams = ['last_push_courses_date' => $lastPushCoursesEpoch];
         $changedGradeItems = $DB->get_records_sql($selectSql, $queryParams);
         if (count($changedGradeItems) > 0) {
-            mtrace("Found new grade items. This implies that new modules or courses may have been created. Changed:");
+            mtrace("Found new grade items. This implies that new modules or courses may have been created. New items:");
             foreach ($changedGradeItems as $changedGradeItem) {
-                mtrace("- itemid {$changedGradeItem->id} courseid {$changedGradeItem->courseid}, timecreated {$changedGradeItem->timecreated}");
+                mtrace("- itemname '{$changedGradeItem->itemname}', itemid {$changedGradeItem->id}, courseid {$changedGradeItem->courseid}, timecreated {$changedGradeItem->timecreated}");
             }
-            throw $this->getSyncCoursesException();
+            mtrace($error_message);
+            return false;
         }
+
+        return true;
+    }
+
+    public function do_work(array $currentSession, ?array $lastClosedSession)
+    {
+        global $CFG, $DB;
 
         $selectSql = "SELECT gg.id,
         mc.id mcid,
@@ -79,12 +88,6 @@ class push_grades extends base_sync_job
             mtrace("New grades were not found.");
         }
 
-    }
-
-    private function getSyncCoursesException(): \Exception
-    {
-        $pushCoursesJobName = push_courses::name;
-        return new \Exception("All courses and modules must be synchronized before grade sync. Run job {$pushCoursesJobName} and try again. Skipping grade sync this time");
     }
 
     private function buildRequestFromGrades(array $grades): \stdClass

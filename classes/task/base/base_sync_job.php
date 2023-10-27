@@ -30,14 +30,25 @@ abstract class base_sync_job extends scheduled_task
         $this->lmsAdapterService = new LmsAdapterService();
 
         mtrace('');
-        mtrace("--- Creating sync session of type '{$syncSessionType}'...");
+        mtrace("--- Getting last successful sync session of type '{$syncSessionType}'...");
         $lastClosedSession = $this->lmsAdapterService->getLastClosedSession($syncSessionType);
-        $currentSession = $this->lmsAdapterService->openSession($syncSessionType); // TODO: Создавать сессию синхронизации, только если есть, что синхронизировать (реализовать предпроверку)
         if ($lastClosedSession === null) {
             mtrace("--- Last closed session was not found");
         } else {
             mtrace("--- Last closed sessionId: {$lastClosedSession['id']}");
         }
+
+        mtrace("--- Executing work precheck...");
+        if (!$this->work_precheck($lastClosedSession)) {
+            mtrace("--- Work precheck failed. Skipping sync work;");
+            $this->log_results($started);
+            return;
+        } else {
+            mtrace("--- Work precheck succeed.");
+        }
+
+        mtrace("--- Creating sync session of type '{$syncSessionType}'...");
+        $currentSession = $this->lmsAdapterService->openSession($syncSessionType);
         mtrace("--- Opened sessionId: {$currentSession['id']}");
 
         mtrace('');
@@ -48,17 +59,27 @@ abstract class base_sync_job extends scheduled_task
         mtrace('');
         mtrace("--- Closing sync session...");
         $this->lmsAdapterService->closeSession($currentSession['id']);
+        $this->log_results($started);
+    }
 
+    private function log_results($started)
+    {
         $duration = time() - $started;
         $duration_date = gmdate('H:i:s', $duration);
         mtrace('');
         mtrace('--- Job total time: ' . $duration_date);
     }
 
+    // Нужна ли (возможна ли) синхронизация
+    public function work_precheck(?array $lastClosedSession): bool
+    {
+        return true;
+    }
+
     // Выполнение работы по синхронизации
     abstract public function do_work(array $currentSession, ?array $lastClosedSession);
 
-    protected function epochFromSession(?array $session): ?int
+    protected function epochFromSession(?array $session): ?string
     {
         if ($session === null) {
             return null;
