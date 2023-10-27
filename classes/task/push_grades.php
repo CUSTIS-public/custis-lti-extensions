@@ -48,6 +48,19 @@ class push_grades extends base_sync_job
     {
         global $CFG, $DB;
 
+        $secondsInWeek = 604800;
+        $maximumAge = $secondsInWeek * 4;
+        $lastSyncEpoch = $this->epochFromSession($lastClosedSession);
+        if ($lastSyncEpoch === null) {
+            mtrace("WARNING: This is a first time this job is started. It won't sync any existing grades and will be skipped. Actual sync will begin starting next job's run.");
+            return;
+        }
+        if (time() - $lastSyncEpoch > $maximumAge) {
+            $lastSyncEpoch = time() - $maximumAge;
+        }
+        $queryParams = ['last_sync_date1' => $lastSyncEpoch, 'last_sync_date2' => $lastSyncEpoch];
+
+        mtrace("Searching new grades...");
         $selectSql = "SELECT gg.id,
         mc.id mcid,
         mc.course,
@@ -65,16 +78,6 @@ class push_grades extends base_sync_job
      AND gi.itemtype = 'mod'
  ORDER BY mc.course, mc.id;
         ";
-
-        $secondsInWeek = 604800;
-        $maximumAge = $secondsInWeek * 2;
-        $lastSyncEpoch = $this->epochFromSession($lastClosedSession);
-        if ($lastSyncEpoch === null || (time() - $lastSyncEpoch > $maximumAge)) {
-            $lastSyncEpoch = time() - $maximumAge;
-        }
-        $queryParams = ['last_sync_date1' => $lastSyncEpoch, 'last_sync_date2' => $lastSyncEpoch];
-
-        mtrace("Searching new grades...");
         $grades = $DB->get_records_sql($selectSql, $queryParams);
         $request = $this->buildRequestFromGrades($grades);
 
@@ -117,7 +120,7 @@ class push_grades extends base_sync_job
             $scoreModel = array();
             $scoreModel['Value'] = $grade->finalgrade;
             $scoreModel['MaxValue'] = $grade->grademax;
-            $scoreModel['ExternalCreatedAt'] = $this->epochToDateString($grade->overridden);
+            $scoreModel['ExternalCreatedAt'] = $this->epochToDateString($grade->overridden ?? $grade->timemodified);
             $scoreModel['ExternalTeacherPersonId'] = $userIdGetter($grade->usermodified);
             $scoreModel['ExternalStudentPersonId'] = $userIdGetter($grade->userid);
 
