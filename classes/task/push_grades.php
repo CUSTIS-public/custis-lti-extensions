@@ -16,7 +16,6 @@ class push_grades extends base_sync_job
     {
         global $CFG, $DB;
 
-        $users_repository = new users_repository();
         $pushCoursesJobName = push_courses::name;
         $push_coursesSessionType = $this->syncSessionTypeByTaskName[$pushCoursesJobName];
         $lastClosedPushCoursesSession = $this->lmsAdapterService->getLastClosedSession($push_coursesSessionType);
@@ -65,10 +64,35 @@ class push_grades extends base_sync_job
             $lastSyncEpoch = time() - $maximumAge;
         }
         $queryParams = ['last_sync_date1' => $lastSyncEpoch, 'last_sync_date2' => $lastSyncEpoch];
-        $grades = $DB->get_records_sql($selectSql, $queryParams);
 
+        mtrace("Searching new grades...");
+        $grades = $DB->get_records_sql($selectSql, $queryParams);
+        $request = $this->buildRequestFromGrades($grades);
+
+        if (count($request->CourseScoresList) != 0) {
+            mtrace("Found grades for courses:");
+            foreach ($request->CourseScoresList as $courseScores) {
+                mtrace("Course id {$courseScores['CourseId']}");
+            }
+            $this->lmsAdapterService->pushGrades($currentSession['id'], $request);
+        } else {
+            mtrace("New grades were not found.");
+        }
+
+    }
+
+    private function getSyncCoursesException(): \Exception
+    {
+        $pushCoursesJobName = push_courses::name;
+        return new \Exception("All courses and modules must be synchronized before grade sync. Run job {$pushCoursesJobName} and try again. Skipping grade sync this time");
+    }
+
+    private function buildRequestFromGrades(array $grades): \stdClass
+    {
         $courseScoresList = array();
         $courseScores = null;
+        $moduleScores = null;
+        $users_repository = new users_repository();
         $userIdGetter = $users_repository->getUserExternalIdGetter();
         foreach ($grades as $grade) {
             if ($courseScores === null || $courseScores['CourseId'] !== $grade->course) {
@@ -79,13 +103,12 @@ class push_grades extends base_sync_job
                 $courseScoresList[] = &$courseScores;
             }
 
-            $lastModule = end($courseScores['ModuleScoreList']);
-            if (!$lastModule || $lastModule['ModuleId'] !== $grade->mcid) {
-                unset($lastModule);
-                $lastModule = array();
-                $lastModule['ModuleId'] = $grade->mcid;
-                $lastModule['Scores'] = array();
-                $courseScores['ModuleScoreList'][] = &$lastModule;
+            if ($moduleScores === null || $moduleScores['ModuleId'] !== $grade->mcid) {
+                unset($moduleScores);
+                $moduleScores = array();
+                $moduleScores['ModuleId'] = $grade->mcid;
+                $moduleScores['Scores'] = array();
+                $courseScores['ModuleScoreList'][] = &$moduleScores;
             }
 
             $scoreModel = array();
@@ -95,18 +118,13 @@ class push_grades extends base_sync_job
             $scoreModel['ExternalTeacherPersonId'] = $userIdGetter($grade->usermodified);
             $scoreModel['ExternalStudentPersonId'] = $userIdGetter($grade->userid);
 
-            $lastModule['Scores'][] = $scoreModel;
+            $moduleScores['Scores'][] = $scoreModel;
         }
 
         $request = new \stdClass;
         $request->CourseScoresList = $courseScoresList;
 
-        $this->lmsAdapterService->pushGrades($currentSession['id'], $request);
+        return $request;
     }
 
-    private function getSyncCoursesException(): \Exception
-    {
-        $pushCoursesJobName = push_courses::name;
-        return new \Exception("All courses and modules must be synchronized before grade sync. Run job {$pushCoursesJobName} and try again. Skipping grade sync this time");
-    }
 }
