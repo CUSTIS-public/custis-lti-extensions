@@ -93,4 +93,15 @@ class users_repository
             };
         }
     }
+
+    // Получает список полей пользователей из таблицы user_info_field.
+    // Используется в настройках плагина.
+    public static function get_custom_user_fields(): array
+    {
+        global $DB;
+
+        $sql = "SELECT CONCAT('user_info_field::', id) as id, CONCAT('user_info_field -> ', shortname, ' (', name, ')') as name from mdl_user_info_field;";
+
+        return $DB->get_records_sql($sql);
+    }
 }

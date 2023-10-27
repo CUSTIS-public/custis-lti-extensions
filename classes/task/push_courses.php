@@ -18,7 +18,7 @@ class push_courses extends base_sync_job
     {
         $lastSyncTime = $this->epochFromSession($lastClosedSession);
         $secondsInYear = 31536000;
-        $minimumCreatedAt = time() - 2 * $secondsInYear;
+        $minimumCreatedAt = time() - 1 * $secondsInYear;
 
         $courses = $this->getCoursesToPush($minimumCreatedAt, $lastSyncTime);
         $moduleTypeInfos = $this->get_module_types();
@@ -61,7 +61,7 @@ class push_courses extends base_sync_job
         ];
         $coursesCount = $DB->count_records_sql($countSql, $queryParams);
         $lastSyncTimeStr = $lastSyncTime === null ? '--' : $lastSyncTime;
-        mtrace("Found {$coursesCount} new/changed courses (starting from 2 years ago and after last sync time: {$lastSyncTimeStr})");
+        mtrace("Found {$coursesCount} new/changed courses (after last sync time: {$lastSyncTimeStr})");
 
         mtrace("Querying data...");
         $selectSql = "SELECT c.* {$fromSql}";
@@ -161,7 +161,7 @@ class push_courses extends base_sync_job
         ];
         $coursesCount = $DB->count_records_sql($countSql, $queryParams);
         $lastSyncTimeStr = $lastSyncTime === null ? '--' : $lastSyncTime;
-        mtrace("Found {$coursesCount} deleted courses (starting from 2 years ago and after last sync time: {$lastSyncTimeStr})");
+        mtrace("Found {$coursesCount} deleted courses (after last sync time: {$lastSyncTimeStr})");
 
         mtrace("Querying deleted course ids...");
         $selectSql = "SELECT DISTINCT l.courseid as id {$fromSql}";
