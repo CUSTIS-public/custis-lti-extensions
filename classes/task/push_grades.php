@@ -79,6 +79,8 @@ class push_grades extends base_sync_job
  ORDER BY mc.course, mc.id;
         ";
         $grades = $DB->get_records_sql($selectSql, $queryParams);
+        $gradesCount = count($grades);
+        mtrace("Found {$gradesCount} new grades.");
         $request = $this->buildRequestFromGrades($grades);
 
         if (count($request->CourseScoresList) != 0) {
@@ -88,7 +90,7 @@ class push_grades extends base_sync_job
             }
             $this->lmsAdapterService->pushGrades($currentSession['id'], $request);
         } else {
-            mtrace("New grades were not found.");
+            mtrace("Grades for pushing were not found.");
         }
 
     }
@@ -101,6 +103,23 @@ class push_grades extends base_sync_job
         $users_repository = new users_repository();
         $userIdGetter = $users_repository->getUserExternalIdGetter();
         foreach ($grades as $grade) {
+            $scoreModel = array();
+            $scoreModel['Value'] = $grade->finalgrade;
+            $scoreModel['MaxValue'] = $grade->grademax;
+            $scoreModel['ExternalCreatedAt'] = $this->epochToDateString($grade->overridden ?? $grade->timemodified);
+            $scoreModel['ExternalTeacherPersonId'] = $userIdGetter($grade->usermodified);
+            $scoreModel['ExternalStudentPersonId'] = $userIdGetter($grade->userid);
+
+            if (!$scoreModel['ExternalStudentPersonId']) {
+                mtrace("Couldn't find ExternalId for Student {$grade->userid}. Skipping grade {$grade->id}");
+                continue;
+            }
+
+            if (!$scoreModel['ExternalTeacherPersonId']) {
+                mtrace("Couldn't find ExternalId for Teacher {$grade->usermodified}. Skipping grade {$grade->id} for Student {$grade->userid}");
+                continue;
+            }
+
             if ($courseScores === null || $courseScores['CourseId'] !== $grade->course) {
                 unset($courseScores);
                 $courseScores = array();
@@ -116,13 +135,6 @@ class push_grades extends base_sync_job
                 $moduleScores['Scores'] = array();
                 $courseScores['ModuleScoreList'][] = &$moduleScores;
             }
-
-            $scoreModel = array();
-            $scoreModel['Value'] = $grade->finalgrade;
-            $scoreModel['MaxValue'] = $grade->grademax;
-            $scoreModel['ExternalCreatedAt'] = $this->epochToDateString($grade->overridden ?? $grade->timemodified);
-            $scoreModel['ExternalTeacherPersonId'] = $userIdGetter($grade->usermodified);
-            $scoreModel['ExternalStudentPersonId'] = $userIdGetter($grade->userid);
 
             $moduleScores['Scores'][] = $scoreModel;
         }

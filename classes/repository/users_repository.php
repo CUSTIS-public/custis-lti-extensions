@@ -37,15 +37,15 @@ class users_repository
             mtrace("Getting user ids by [user_info_field]->[$idField]");
             return function ($userId) use ($idField) {
                 global $CFG, $DB;
-                $sql = "SELECT d.data FROM {user} u
-                JOIN {user_info_data} d ON u.id = d.userid
-                WHERE u.id = :userId AND d.fieldid = :idField";
-                $user = $DB->get_record_sql($sql, ['userId' => $userId, 'idField' => $idField]);
+                $sql = "SELECT u.id, d.data FROM {user} u
+                LEFT JOIN {user_info_data} d ON u.id = d.userid
+                WHERE u.id = :userid AND d.fieldid = :idfield";
+                $user = $DB->get_record_sql($sql, ['userid' => $userId, 'idfield' => $idField]);
 
                 if (!$user) {
                     return false;
                 } else {
-                    return $user->id;
+                    return $user->data;
                 }
             };
         }
@@ -81,9 +81,9 @@ class users_repository
             return function ($externalId) use ($idField) {
                 global $CFG, $DB;
                 $sql = "SELECT u.id FROM {user} u
-                JOIN {user_info_data} d ON u.id = d.userid
-                WHERE d.fieldid = :idField AND d.data = :externalId";
-                $user = $DB->get_record_sql($sql, ['idField' => $idField, 'externalId' => $externalId]);
+                LEFT JOIN {user_info_data} d ON u.id = d.userid
+                WHERE d.fieldid = :idfield AND d.data = :externalid";
+                $user = $DB->get_record_sql($sql, ['idfield' => $idField, 'externalid' => $externalId]);
 
                 if (!$user) {
                     return false;
