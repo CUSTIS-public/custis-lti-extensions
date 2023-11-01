@@ -29,6 +29,10 @@ class pull_members extends base_sync_job
             $courseId = $courseMembers['courseId'];
             mtrace("Enrolling in course {$courseId}");
             $enrol = $DB->get_record('enrol', ['courseid' => $courseId, 'enrol' => 'manual']);
+            if (!$enrol) {
+                mtrace("Enrol for $courseId was not found. Skipping");
+                continue;
+            }
 
             foreach ($courseMembers['studentExternalPersonIds'] as $studentId) {
                 $userId = $userGetter($studentId);
