@@ -1,8 +1,6 @@
 <?php
 namespace tool_modeussync\repository;
 
-use tool_modeussync\service\course_hash_service;
-
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -10,13 +8,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class courses_repository
 {
-    private course_hash_service $course_hash_service;
-
-    public function __construct()
-    {
-        $this->course_hash_service = new course_hash_service();
-    }
-
     /**
      * Получает курсы по их idnumber
      *
