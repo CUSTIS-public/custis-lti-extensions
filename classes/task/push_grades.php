@@ -48,8 +48,8 @@ class push_grades extends base_sync_job
     {
         global $CFG, $DB;
 
-        $secondsInWeek = 604800;
-        $maximumAge = $secondsInWeek * 4;
+        $maximumAge = get_config('tool_modeussync', 'sync_grades_max_age');
+        mtrace("Got config: sync_grades_max_age $maximumAge");
         $lastSyncEpoch = $this->epochFromSession($lastClosedSession);
         if ($lastSyncEpoch === null) {
             mtrace("WARNING: This is a first time this job is started. It won't sync any existing grades and will be skipped. Actual sync will begin starting next job's run.");

@@ -17,8 +17,9 @@ class push_courses extends base_sync_job
     public function do_work(array $currentSession, ?array $lastClosedSession)
     {
         $lastSyncTime = $this->epochFromSession($lastClosedSession);
-        $secondsInYear = 31536000;
-        $minimumCreatedAt = time() - 1 * $secondsInYear;
+        $sync_courses_max_age = get_config('tool_modeussync', 'sync_courses_max_age');
+        mtrace("Got config: sync_courses_max_age $sync_courses_max_age");
+        $minimumCreatedAt = time() - $sync_courses_max_age;
 
         $courses = $this->getCoursesToPush($minimumCreatedAt, $lastSyncTime);
         $moduleTypeInfos = $this->get_module_types();
@@ -26,8 +27,8 @@ class push_courses extends base_sync_job
         $request = new \stdClass;
         $request->courses = $courses;
         $request->moduleTypes = $moduleTypeInfos;
-        $deletedCourseIds = $this->getDeletedCourseIds($minimumCreatedAt, $lastSyncTime);
-        $request->deletedCourseIds = $deletedCourseIds;
+        // $deletedCourseIds = $this->getDeletedCourseIds($minimumCreatedAt, $lastSyncTime); TODO: Поддержать на стороне адаптера, если потребуется
+        $request->deletedCourseIds = [];
 
         $this->lmsAdapterService->updateCoursesAndModuleTypes($currentSession['id'], $request);
     }
