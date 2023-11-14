@@ -45,11 +45,11 @@ class push_courses extends base_sync_job
                             WHERE (eventname = '\core\\event\course_module_created' OR
                                    eventname = '\core\\event\course_module_updated' OR
                                    eventname = '\core\\event\course_module_deleted')
-                              AND (:last_sync_date1::int is null OR :last_sync_date2 <= l.timecreated)) l
+                              AND (CAST(:last_sync_date1 AS INTEGER) is null OR :last_sync_date2 <= l.timecreated)) l
                            ON l.courseid = c.id
         WHERE c.timecreated >= :minimum_date
           AND (
-            (:last_sync_date3::int is null OR :last_sync_date4 <= c.timecreated OR :last_sync_date5 <= c.timemodified) OR
+            (CAST(:last_sync_date3 AS INTEGER) is null OR :last_sync_date4 <= c.timecreated OR :last_sync_date5 <= c.timemodified) OR
                 l.courseid is not null)";
         $countSql = "SELECT count(DISTINCT c.id) {$fromSql}";
         $queryParams = [
@@ -153,7 +153,7 @@ class push_courses extends base_sync_job
 
         mtrace("Searching deleted courses...");
         $fromSql = "FROM {logstore_standard_log} l
-                WHERE eventname = '\core\\event\course_deleted' AND :minimum_date <= l.timecreated AND (:last_sync_date1::int is null OR :last_sync_date2 <= l.timecreated)";
+                WHERE eventname = '\core\\event\course_deleted' AND :minimum_date <= l.timecreated AND (CAST(:last_sync_date1 AS INTEGER) is null OR :last_sync_date2 <= l.timecreated)";
         $countSql = "SELECT count(DISTINCT l.courseid) {$fromSql}";
         $queryParams = [
             'minimum_date' => $minimumCreatedAt,
