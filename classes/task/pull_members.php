@@ -12,6 +12,37 @@ class pull_members extends base_sync_job
         return 'pull_members';
     }
 
+    public function work_precheck($lastClosedSession): bool
+    {
+        global $DB;
+        $pushCoursesJobName = push_courses::name;
+        $error_message = "All courses must be synchronized before members sync. Run job {$pushCoursesJobName} and try again. Skipping member sync this time";
+        $push_coursesSessionType = $this->syncSessionTypeByTaskName[$pushCoursesJobName];
+        $lastClosedPushCoursesSession = $this->lmsAdapterService->getLastClosedSession($push_coursesSessionType);
+        if ($lastClosedPushCoursesSession === null) {
+            mtrace($error_message);
+            return false;
+        }
+        $lastPushCoursesEpoch = $this->epochFromSession($lastClosedPushCoursesSession);
+
+        $selectSql = "SELECT c.id, c.timecreated, c.fullname
+        FROM {course} c
+        WHERE c.timecreated > :last_push_courses_date
+        ";
+        $queryParams = ['last_push_courses_date' => $lastPushCoursesEpoch];
+        $notPushedCourses = $DB->get_records_sql($selectSql, $queryParams);
+        if (count($notPushedCourses) > 0) {
+            mtrace("Found new courses:");
+            foreach ($notPushedCourses as $newCourse) {
+                mtrace("- fullname '{$newCourse->fullname}', id {$newCourse->id}, timecreated {$newCourse->timecreated}");
+            }
+            mtrace($error_message);
+            return false;
+        }
+
+        return true;
+    }
+
     public function do_work(array $currentSession, ?array $lastClosedSession)
     {
         global $CFG, $DB;
