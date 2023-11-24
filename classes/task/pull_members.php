@@ -56,6 +56,7 @@ class pull_members extends base_sync_job
         $userGetter = $users_repository->getUserIdGetter();
 
         mtrace("Begin to enrol...");
+        $totalEnrolled = 0;
         foreach ($courseMembersList as $courseMembers) {
             $courseId = $courseMembers['courseId'];
             mtrace("Enrolling in course {$courseId}");
@@ -72,6 +73,7 @@ class pull_members extends base_sync_job
                     continue;
                 }
                 $enrolplugin->enrol_user($enrol, $userId, $studentRoleId);
+                $totalEnrolled += 1;
             }
 
             foreach ($courseMembers['teacherExternalPersonIds'] as $teacherId) {
@@ -81,9 +83,11 @@ class pull_members extends base_sync_job
                     continue;
                 }
                 $enrolplugin->enrol_user($enrol, $userId, $teacherRoleId);
+                $totalEnrolled += 1;
             }
 
             mtrace("");
         }
+        mtrace("Total enrolled $totalEnrolled users");
     }
 }
